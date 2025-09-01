@@ -2,7 +2,7 @@
 import React from 'react';
 import type { User } from '../types';
 import { AnimatedButton } from './AnimatedButton';
-import { UserCircleIcon, BriefcaseIcon } from './icons';
+import { UserCircleIcon, BriefcaseIcon, SparklesIcon } from './icons';
 
 interface HeaderProps {
   onGoHome: () => void;
@@ -13,9 +13,10 @@ interface HeaderProps {
   onNavigateToAdmin: () => void;
   onNavigateToProfile: () => void;
   onNavigateToOpportunities: () => void;
+  onNavigateToAiHelp: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user, onGoHome, onOpenLogin, onOpenSignup, onLogout, onNavigateToAdmin, onNavigateToProfile, onNavigateToOpportunities }) => {
+export const Header: React.FC<HeaderProps> = ({ user, onGoHome, onOpenLogin, onOpenSignup, onLogout, onNavigateToAdmin, onNavigateToProfile, onNavigateToOpportunities, onNavigateToAiHelp }) => {
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -30,6 +31,10 @@ export const Header: React.FC<HeaderProps> = ({ user, onGoHome, onOpenLogin, onO
         <nav className="flex items-center space-x-2 md:space-x-4">
           {user ? (
             <>
+               <button onClick={onNavigateToAiHelp} className="hidden md:flex items-center gap-1.5 text-gray-600 hover:text-orange-500 transition-colors duration-300 font-medium px-3 py-2 rounded-lg hover:bg-orange-50">
+                  <SparklesIcon className="w-5 h-5 text-orange-500" />
+                  IA me Ajuda
+               </button>
               {user.role === 'admin' && (
                 <button onClick={onNavigateToAdmin} className="hidden md:block text-gray-600 hover:text-orange-500 transition-colors duration-300 font-medium">
                   Painel Admin

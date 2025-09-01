@@ -45,6 +45,7 @@ export interface User {
   serviceChangeRequest?: string; // Holds new service name for admin approval
 }
 
+// Fix: Changed comma to pipe to create a union type for the keys.
 export type UserCredentials = Pick<User, 'email' | 'password'>;
 
 // Service Request Management
@@ -68,4 +69,15 @@ export interface JobPost {
     createdAt: string;
 }
 
+// AI Help Response
+export interface AiHelpResponse {
+    is_diy: boolean;
+    solution_steps: { step: number; description: string }[];
+    recommend_professional: boolean;
+    recommended_category: string | null;
+    professional_reasoning: string;
+    disclaimer: string;
+}
+
 export type ActiveModal = 'login' | 'signup' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'confirmation' | 'cta' | null;
+export type View = 'home' | 'professionals' | 'admin' | 'profile' | 'opportunities' | 'ai-help';
