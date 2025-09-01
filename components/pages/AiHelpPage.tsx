@@ -3,11 +3,15 @@ import type { User, AiHelpResponse } from '../../types';
 import { AnimatedButton } from '../AnimatedButton';
 import { SparklesIcon, ShieldCheckIcon } from '../icons';
 import { ProfessionalCard } from '../ProfessionalCard';
+// Fix: Import BackButton to enable back navigation.
+import { BackButton } from '../BackButton';
 
 interface AiHelpPageProps {
   onAiHelpRequest: (problemDescription: string) => Promise<AiHelpResponse>;
   professionals: User[];
   onViewProfessional: (professional: User) => void;
+  // Fix: Add onBack prop to handle navigation.
+  onBack: () => void;
 }
 
 const LoadingSpinner = () => (
@@ -20,7 +24,8 @@ const LoadingSpinner = () => (
     </div>
 );
 
-export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, professionals, onViewProfessional }) => {
+// Fix: Destructure onBack prop to use it.
+export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, professionals, onViewProfessional, onBack }) => {
   const [problem, setProblem] = useState('');
   const [aiResponse, setAiResponse] = useState<AiHelpResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +36,8 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
       return null;
     }
     const categoryProfessionals = professionals
-      .filter(p => p.service === aiResponse.recommended_category)
+      // Fix: Property 'service' does not exist on type 'User'. Changed to 'services' and used .includes() to check if the category is in the array.
+      .filter(p => p.services?.includes(aiResponse.recommended_category!))
       .sort((a, b) => (b.rating || 0) - (a.rating || 0));
     
     return categoryProfessionals.length > 0 ? categoryProfessionals[0] : null;
@@ -58,6 +64,8 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Fix: Add BackButton for navigation. */}
+      <BackButton onClick={onBack} />
       <div className="text-center">
         <div className="flex justify-center items-center gap-3">
           <SparklesIcon className="w-10 h-10 text-orange-500" />

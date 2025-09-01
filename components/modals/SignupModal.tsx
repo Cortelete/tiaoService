@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { User, UserRole } from '../../types';
 import { serviceCategories } from '../../constants';
@@ -7,7 +6,7 @@ import { XMarkIcon } from '../icons';
 
 interface SignupModalProps {
   onClose: () => void;
-  onSignup: (newUser: Omit<User, 'id' | 'isProfileComplete'>) => boolean;
+  onSignup: (newUser: Omit<User, 'id' | 'isProfileComplete' | 'regionId'>) => boolean;
   onSwitchToLogin: () => void;
 }
 
@@ -16,27 +15,40 @@ export const SignupModal: React.FC<SignupModalProps> = ({ onClose, onSignup, onS
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('');
-  const [service, setService] = useState(serviceCategories[0].name);
+  const [street, setStreet] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [services, setServices] = useState<string[]>([]);
   const [cpfCnpj, setCpfCnpj] = useState('');
   const [role, setRole] = useState<UserRole>('client');
   const [error, setError] = useState('');
+
+  const handleServiceToggle = (toggledService: string) => {
+    setServices(prev => 
+        prev.includes(toggledService) 
+        ? prev.filter(s => s !== toggledService)
+        : [...prev, toggledService]
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    const baseFields = name && email && password && phone && location;
-    const professionalFields = role === 'professional' ? service && cpfCnpj : true;
+    const baseFields = name && email && password && phone && street && neighborhood && city && state;
+    const professionalFields = role === 'professional' ? services.length > 0 && cpfCnpj : true;
     
     if (!baseFields || !professionalFields) {
       setError('Por favor, preencha todos os campos.');
       return;
     }
     
-    const userData: Omit<User, 'id' | 'isProfileComplete'> = { name, email, password, role, phone, location };
+    const userData: Omit<User, 'id' | 'isProfileComplete' | 'regionId'> = { 
+      name, email, password, role, phone, street, neighborhood, city, state 
+    };
     if (role === 'professional') {
-      userData.service = service;
+      userData.services = services;
       userData.cpfCnpj = cpfCnpj;
     }
 
@@ -77,24 +89,51 @@ export const SignupModal: React.FC<SignupModalProps> = ({ onClose, onSignup, onS
               <input type="text" id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="(XX) XXXXX-XXXX"/>
             </div>
           </div>
-
-          <div>
-              <label htmlFor="location" className="text-sm font-bold text-gray-600 block mb-1">Sua Cidade e Bairro</label>
-              <input type="text" id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Copacabana, Rio de Janeiro"/>
+          
+          {/* Address Fields */}
+          <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+             <h3 className="text-md font-bold text-gray-700">Seu Endereço</h3>
+             <div>
+                <label htmlFor="street" className="text-sm font-bold text-gray-600 block mb-1">Rua e Número</label>
+                <input type="text" id="street" value={street} onChange={(e) => setStreet(e.target.value)} className="w-full p-3 text-gray-700 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Av. Brasil, 123"/>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                    <label htmlFor="neighborhood" className="text-sm font-bold text-gray-600 block mb-1">Bairro</label>
+                    <input type="text" id="neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} className="w-full p-3 text-gray-700 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Copacabana"/>
+                </div>
+                <div>
+                    <label htmlFor="state" className="text-sm font-bold text-gray-600 block mb-1">Estado</label>
+                    <input type="text" id="state" value={state} onChange={(e) => setState(e.target.value)} className="w-full p-3 text-gray-700 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: RJ"/>
+                </div>
+            </div>
+             <div>
+                <label htmlFor="city" className="text-sm font-bold text-gray-600 block mb-1">Cidade</label>
+                <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)} className="w-full p-3 text-gray-700 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Rio de Janeiro"/>
+            </div>
           </div>
+
 
            {role === 'professional' && (
             <div className="p-4 bg-orange-50 rounded-lg space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="service" className="text-sm font-bold text-gray-600 block mb-1">Área de Atuação</label>
-                  <select id="service" value={service} onChange={(e) => setService(e.target.value)} className="w-full p-3 text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
-                    {serviceCategories.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="cpfCnpj" className="text-sm font-bold text-gray-600 block mb-1">CPF ou CNPJ</label>
-                  <input type="text" id="cpfCnpj" value={cpfCnpj} onChange={(e) => setCpfCnpj(e.target.value)} className="w-full p-3 text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Seu documento"/>
+              <div>
+                <label htmlFor="cpfCnpj" className="text-sm font-bold text-gray-600 block mb-1">CPF ou CNPJ</label>
+                <input type="text" id="cpfCnpj" value={cpfCnpj} onChange={(e) => setCpfCnpj(e.target.value)} className="w-full p-3 text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Seu documento"/>
+              </div>
+              <div>
+                <label className="text-sm font-bold text-gray-600 block">Área(s) de Atuação</label>
+                 <p className="text-xs text-gray-500 mb-2">Selecione uma ou mais opções.</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {serviceCategories.map(cat => (
+                    <button
+                      type="button"
+                      key={cat.name}
+                      onClick={() => handleServiceToggle(cat.name)}
+                      className={`p-2 text-sm rounded-lg border-2 transition-colors text-center font-medium ${services.includes(cat.name) ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 border-gray-200 hover:bg-orange-50'}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>

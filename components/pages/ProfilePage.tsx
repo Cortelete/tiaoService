@@ -1,10 +1,13 @@
 
+
 import React, { useState, useMemo } from 'react';
 import type { User, ServiceRequest, ServiceRequestStatus, JobPost } from '../../types';
 import { AnimatedButton } from '../AnimatedButton';
 import { UserProfileForm } from '../UserProfileForm';
 import { UsersIcon, TrashIcon } from '../icons';
 import { serviceCategories } from '../../constants';
+// Fix: Import the BackButton component to resolve the 'Cannot find name' error.
+import { BackButton } from '../BackButton';
 
 interface ProfilePageProps {
   currentUser: User;
@@ -15,6 +18,7 @@ interface ProfilePageProps {
   onUpdateUser: (updatedUser: User) => void;
   onAddJobPost: (post: Omit<JobPost, 'id' | 'createdAt' | 'clientId'>) => void;
   onDeleteJobPost: (postId: number) => void;
+  onBack: () => void;
 }
 
 // Helper to format date
@@ -213,7 +217,7 @@ const ProfessionalDashboard: React.FC<{ professional: User, requests: ServiceReq
                             uniqueClients.map(client => (
                                 <div key={client.id} className="p-4 bg-white rounded-lg shadow-md">
                                     <p className="font-bold text-lg text-gray-800">{client.name}</p>
-                                    <p className="text-sm text-gray-600 mt-1">Localização: <span className="font-semibold">{client.location}</span></p>
+                                    <p className="text-sm text-gray-600 mt-1">Localização: <span className="font-semibold">{client.neighborhood}, {client.city}</span></p>
                                     <p className="text-sm text-gray-600">Telefone: <span className="font-semibold">{client.phone}</span></p>
                                 </div>
                             ))
@@ -229,9 +233,10 @@ const ProfessionalDashboard: React.FC<{ professional: User, requests: ServiceReq
 };
 
 
-export const ProfilePage: React.FC<ProfilePageProps> = ({ currentUser, users, serviceRequests, jobPosts, onUpdateRequestStatus, onUpdateUser, onAddJobPost, onDeleteJobPost }) => {
+export const ProfilePage: React.FC<ProfilePageProps> = ({ currentUser, users, serviceRequests, jobPosts, onUpdateRequestStatus, onUpdateUser, onAddJobPost, onDeleteJobPost, onBack }) => {
   return (
     <div>
+      <BackButton onClick={onBack} />
       <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold text-gray-800">
           Olá, <span className="animated-gradient bg-gradient-to-r from-orange-500 to-blue-600 bg-clip-text text-transparent">{currentUser.name.split(' ')[0]}</span>!

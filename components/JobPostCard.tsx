@@ -35,7 +35,7 @@ export const JobPostCard: React.FC<JobPostCardProps> = ({ post, client }) => {
                     <h3 className="text-xl font-bold text-gray-800">{client.name}</h3>
                     <div className="flex items-center mt-1 text-sm text-gray-500">
                         <MapPinIcon className="w-4 h-4 mr-1.5" />
-                        {client.location}
+                        {client.neighborhood}, {client.city}
                     </div>
                 </div>
                 <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{timeAgo(post.createdAt)}</span>

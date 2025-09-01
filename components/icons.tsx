@@ -40,6 +40,54 @@ export const ComputerDesktopIcon: React.FC<IconProps> = (props) => (
   </svg>
 );
 
+// New Service Icons
+export const CogIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m18 0h-1.5m-15 0H3.75m16.5 0h-1.5m-1.5 6.42-1.026-1.026a2.25 2.25 0 0 0-3.182 0l-1.026 1.026m3.182-3.182-1.026-1.026a2.25 2.25 0 0 0-3.182 0l-1.026 1.026m3.182-3.182-1.026-1.026a2.25 2.25 0 0 0-3.182 0l-1.026 1.026M12 4.5v.01M12 19.5v.01" />
+    </svg>
+);
+export const BeakerIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.5 1.591L5.25 14.25M9.75 3.104a2.25 2.25 0 0 0-2.25 2.25c0 1.242.99 2.25 2.25 2.25s2.25-1.008 2.25-2.25c0-1.242-.99-2.25-2.25-2.25M9.75 3.104C11.232 3.104 12 4.34 12 5.356m0 0v5.714a2.25 2.25 0 0 0 .5 1.591L18.75 14.25M12 5.356c1.488 0 2.25.99 2.25 2.25s-.762 2.25-2.25 2.25S9.75 8.848 9.75 7.606c0-1.26.762-2.25 2.25-2.25m0 0 1.5 1.5M4.5 21v-6.75A2.25 2.25 0 0 1 6.75 12h10.5a2.25 2.25 0 0 1 2.25 2.25v6.75" />
+    </svg>
+);
+export const FireIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.468 3.75 3.75 0 0 0-1.993-2.193 3.75 3.75 0 0 0-4.243 4.242 3.75 3.75 0 0 0 5.74 5.42Z" />
+    </svg>
+);
+export const HomeModernIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m-3-1-3-1.091m0 0-3 1.091m0 0 3 1.091m0 0-3-1.091m0-2.182-3-1.091m12 0-3 1.091m-9-3.273 3-1.091M9 3l3 1.091" />
+    </svg>
+);
+export const KeyIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
+    </svg>
+);
+export const PaintBucketIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.75-3.75 9A8.25 8.25 0 0 1 12 2.25a8.25 8.25 0 0 1 15.75 6.75L12 21.75Z" />
+    </svg>
+);
+export const TvIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 20.25h12m-7.5-3.75v3.75m3.75-3.75v3.75m-7.5-12h12v-3.75a.75.75 0 0 0-.75-.75h-10.5a.75.75 0 0 0-.75.75v3.75m-3.75 0h19.5v12h-19.5v-12Z" />
+    </svg>
+);
+export const WifiIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.136 11.886c3.87-3.87 10.154-3.87 14.024 0M19.712 8.734c-6.482-6.482-17.034-6.482-23.516 0" />
+    </svg>
+);
+export const BuildingStorefrontIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5A2.25 2.25 0 0 0 11.25 11.25H4.5A2.25 2.25 0 0 0 2.25 13.5V21M3 3h12M13.5 3h4.5M3 3v4.5M13.5 3v4.5m0-4.5h4.5m-4.5 0v4.5m0-4.5h1.125c.621 0 1.125.504 1.125 1.125V11.25m-9 0h9" />
+    </svg>
+);
+
 
 // UI Icons
 export const StarIcon: React.FC<IconProps> = (props) => (
@@ -91,6 +139,23 @@ export const BriefcaseIcon: React.FC<IconProps> = (props) => (
   </svg>
 );
 
+export const PaperAirplaneIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+    </svg>
+);
+
+export const ChatBubbleOvalLeftEllipsisIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.761 9.761 0 0 1-2.56-1.037L3 21.75l1.037-3.56a9.76 9.76 0 0 1-1.037-2.56C3 7.444 7.03 3.75 12 3.75s9 3.694 9 8.25Z" />
+    </svg>
+);
+
+export const ArrowLeftIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+    </svg>
+);
 
 // Admin Icons
 export const PencilSquareIcon: React.FC<IconProps> = (props) => (

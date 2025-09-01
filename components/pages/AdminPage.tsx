@@ -2,6 +2,7 @@ import React from 'react';
 import type { User, UserStatus } from '../../types';
 import { AnimatedButton } from '../AnimatedButton';
 import { PencilSquareIcon, TrashIcon, LockClosedIcon, LockOpenIcon } from '../icons';
+import { BackButton } from '../BackButton';
 
 interface AdminPageProps {
   users: User[];
@@ -9,11 +10,12 @@ interface AdminPageProps {
   onDeleteUser: (userId: number) => void;
   onEditUser: (user: User) => void;
   onApproveChange: (userId: number) => void;
+  onBack: () => void;
 }
 
-export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus, onDeleteUser, onEditUser, onApproveChange }) => {
+export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus, onDeleteUser, onEditUser, onApproveChange, onBack }) => {
   const pendingProfessionals = users.filter(u => u.role === 'professional' && u.status === 'pending');
-  const serviceChangeRequests = users.filter(u => u.role === 'professional' && u.serviceChangeRequest);
+  const serviceChangeRequests = users.filter(u => u.role === 'professional' && u.servicesChangeRequest && u.servicesChangeRequest.length > 0);
   const otherUsers = users.filter(u => u.role !== 'admin');
 
   const getStatusBadge = (status?: UserStatus) => {
@@ -49,6 +51,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus,
 
   return (
     <div>
+      <BackButton onClick={onBack} />
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-10">
         Painel Administrativo
       </h1>
@@ -63,7 +66,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus,
               <div key={user.id} className="p-3 bg-white rounded-lg flex justify-between items-center">
                 <div>
                     <p className="font-semibold text-gray-800">{user.name}</p>
-                    <p className="text-sm text-gray-500">{user.service}</p>
+                    <p className="text-sm text-gray-500">{user.services?.join(', ')}</p>
                 </div>
                 <AnimatedButton onClick={() => onUpdateUserStatus(user.id, 'approved')} className="!px-3 !py-1.5 text-sm">Aprovar</AnimatedButton>
               </div>
@@ -78,7 +81,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus,
               <div key={user.id} className="p-3 bg-white rounded-lg flex justify-between items-center">
                 <div>
                     <p className="font-semibold text-gray-800">{user.name}</p>
-                    <p className="text-sm text-gray-500">{user.service} → <span className="font-bold text-blue-600">{user.serviceChangeRequest}</span></p>
+                    <p className="text-sm text-gray-500">{user.services?.join(', ')} → <span className="font-bold text-blue-600">{user.servicesChangeRequest?.join(', ')}</span></p>
                 </div>
                 <AnimatedButton onClick={() => onApproveChange(user.id)} className="!bg-blue-500 hover:!bg-blue-600 !px-3 !py-1.5 text-sm">Aprovar Mudança</AnimatedButton>
               </div>

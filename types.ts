@@ -30,19 +30,24 @@ export interface User {
 
   // Common fields
   phone: string;
-  location: string;
+  street: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  regionId: number; // For proximity searches
   
   // Professional-specific fields
-  service?: string;
+  services?: string[];
   cpfCnpj?: string;
   bio?: string;
   imageUrl?: string;
   rating?: number;
   reviewsCount?: number;
+
   reviews?: Review[];
   pricing?: Pricing;
   availability?: Record<string, string>;
-  serviceChangeRequest?: string; // Holds new service name for admin approval
+  servicesChangeRequest?: string[]; // Holds new services for admin approval
 }
 
 // Fix: Changed comma to pipe to create a union type for the keys.
@@ -77,6 +82,15 @@ export interface AiHelpResponse {
     recommended_category: string | null;
     professional_reasoning: string;
     disclaimer: string;
+}
+
+// Chat
+export interface ChatMessage {
+    id: number;
+    senderId: number;
+    receiverId: number;
+    text: string;
+    timestamp: string;
 }
 
 export type ActiveModal = 'login' | 'signup' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'confirmation' | 'cta' | null;

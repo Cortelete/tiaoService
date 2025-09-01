@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -16,8 +16,9 @@ import { CompleteProfileModal } from './components/modals/CompleteProfileModal';
 import { EditUserModal } from './components/modals/EditUserModal';
 import { ConfirmationModal } from './components/modals/ConfirmationModal';
 import { CtaModal } from './components/modals/CtaModal';
-import type { User, UserCredentials, UserStatus, ServiceRequest, ServiceRequestStatus, JobPost, ActiveModal, AiHelpResponse } from './types';
-import { serviceCategories, users as initialUsers, serviceRequests as initialServiceRequests, jobPosts as initialJobPosts } from './constants';
+import { ChatModal } from './components/modals/ChatModal';
+import type { User, UserCredentials, UserStatus, ServiceRequest, ServiceRequestStatus, JobPost, ActiveModal, AiHelpResponse, ChatMessage } from './types';
+import { serviceCategories, users as initialUsers, serviceRequests as initialServiceRequests, jobPosts as initialJobPosts, initialChatMessages } from './constants';
 
 type View = 'home' | 'professionals' | 'admin' | 'profile' | 'opportunities' | 'ai-help';
 
@@ -33,15 +34,35 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  
   const [view, setView] = useState<View>('home');
+  const [navigationHistory, setNavigationHistory] = useState<View[]>(['home']);
+  
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialChatMessages);
+  const [activeChatProfessional, setActiveChatProfessional] = useState<User | null>(null);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+
+  const navigateTo = useCallback((newView: View) => {
+    setNavigationHistory(prev => [...prev, newView]);
+    setView(newView);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    if (navigationHistory.length <= 1) return;
+    const newHistory = [...navigationHistory];
+    newHistory.pop();
+    setNavigationHistory(newHistory);
+    setView(newHistory[newHistory.length - 1]);
+  }, [navigationHistory]);
 
   const handleSelectCategory = useCallback((category: string) => {
     setActiveCategory(category);
-    setView('professionals');
-  }, []);
+    navigateTo('professionals');
+  }, [navigateTo]);
 
   const handleGoHome = useCallback(() => {
     setActiveCategory(null);
+    setNavigationHistory(['home']);
     setView('home');
   }, []);
   
@@ -53,6 +74,7 @@ const App: React.FC = () => {
     setActiveModal(null);
     setSelectedProfessional(null);
     setEditingUser(null);
+    setActiveChatProfessional(null); // Close chat as well
   }, []);
 
   const handleLogin = useCallback((credentials: UserCredentials): { success: boolean, message?: string } => {
@@ -89,11 +111,26 @@ const App: React.FC = () => {
     }
   }, [currentUser]);
 
-  const handleSignup = useCallback((newUser: Omit<User, 'id' | 'isProfileComplete'>): boolean => {
+  const handleSignup = useCallback((newUser: Omit<User, 'id' | 'isProfileComplete' | 'regionId'>): boolean => {
+    // Simple logic to assign regionId based on city. In a real app, this would be more complex.
+    const cityRegionMap: { [key: string]: number } = {
+        'rio de janeiro': 1,
+        'são paulo': 2,
+        'belo horizonte': 3,
+        'salvador': 4,
+        'porto alegre': 5,
+        'curitiba': 6,
+        'recife': 7,
+        'fortaleza': 8,
+        'brasília': 9,
+    };
+    const regionId = cityRegionMap[newUser.city.toLowerCase()] || 10; // Default region 10
+
     const createdUser: User = { 
       ...newUser, 
       id: Date.now(),
       isProfileComplete: false,
+      regionId,
       ...(newUser.role === 'professional' && { status: 'pending' })
     };
     
@@ -110,10 +147,10 @@ const App: React.FC = () => {
 
   const handleLogout = useCallback(() => {
     setCurrentUser(null);
-    setView('home');
-  }, []);
+    handleGoHome();
+  }, [handleGoHome]);
 
-  const handleCreateServiceRequest = useCallback((professional: User) => {
+  const handleCreateServiceRequest = useCallback((professional: User, serviceName: string) => {
     if (!currentUser) {
       setSelectedProfessional(null);
       setActiveModal('login');
@@ -123,12 +160,13 @@ const App: React.FC = () => {
         id: Date.now(),
         clientId: currentUser.id,
         professionalId: professional.id,
-        serviceName: professional.service || 'Serviço Geral',
+        serviceName,
         status: 'pending',
         createdAt: new Date().toISOString(),
     };
     setServiceRequests(prev => [newRequest, ...prev]);
     setSelectedProfessional(null);
+    setActiveChatProfessional(null); // Close chat if open
     setActiveModal('confirmation');
   }, [currentUser]);
 
@@ -153,33 +191,33 @@ const App: React.FC = () => {
 
   const handleNavigateToAdmin = useCallback(() => {
     if (currentUser?.role === 'admin') {
-      setView('admin');
+      navigateTo('admin');
       setActiveCategory(null);
     }
-  }, [currentUser]);
+  }, [currentUser, navigateTo]);
   
   const handleNavigateToProfile = useCallback(() => {
       if (currentUser) {
-          setView('profile');
+          navigateTo('profile');
           setActiveCategory(null);
       }
-  }, [currentUser]);
+  }, [currentUser, navigateTo]);
 
   const handleNavigateToOpportunities = useCallback(() => {
       if (currentUser?.role === 'professional') {
-          setView('opportunities');
+          navigateTo('opportunities');
           setActiveCategory(null);
       }
-  }, [currentUser]);
+  }, [currentUser, navigateTo]);
 
   const handleNavigateToAiHelp = useCallback(() => {
     if (currentUser) {
-      setView('ai-help');
+      navigateTo('ai-help');
       setActiveCategory(null);
     } else {
       setActiveModal('login');
     }
-  }, [currentUser]);
+  }, [currentUser, navigateTo]);
 
   const handleCtaSubmit = useCallback((name: string) => {
     const phone = '5541988710303';
@@ -201,8 +239,8 @@ const App: React.FC = () => {
 
   const handleAdminApproveServiceChange = useCallback((userId: number) => {
     const user = allUsers.find(u => u.id === userId);
-    if (user && user.serviceChangeRequest) {
-      handleUpdateUser({ ...user, service: user.serviceChangeRequest, serviceChangeRequest: undefined });
+    if (user && user.servicesChangeRequest) {
+      handleUpdateUser({ ...user, services: user.servicesChangeRequest, servicesChangeRequest: undefined });
     }
   }, [allUsers, handleUpdateUser]);
   
@@ -252,6 +290,86 @@ const App: React.FC = () => {
     return JSON.parse(response.text.trim()) as AiHelpResponse;
   }, []);
 
+  const handleStartChat = useCallback((professional: User) => {
+    if (!currentUser) {
+        setActiveModal('login');
+        return;
+    }
+    // Close other modals before opening chat
+    setSelectedProfessional(null); 
+    setActiveChatProfessional(professional);
+  }, [currentUser]);
+
+  const handleSendMessage = useCallback(async (text: string) => {
+      if (!currentUser || !activeChatProfessional || isSendingMessage) return;
+
+      const userMessage: ChatMessage = {
+          id: Date.now(),
+          senderId: currentUser.id,
+          receiverId: activeChatProfessional.id,
+          text,
+          timestamp: new Date().toISOString()
+      };
+      
+      setChatMessages(prev => [...prev, userMessage]);
+      setIsSendingMessage(true);
+
+      // Simulate AI Professional Reply
+      const conversationHistory = chatMessages
+          .filter(m => (m.senderId === currentUser.id && m.receiverId === activeChatProfessional.id) || (m.senderId === activeChatProfessional.id && m.receiverId === currentUser.id))
+          .map(m => `${m.senderId === currentUser.id ? 'Cliente' : 'Você'}: ${m.text}`)
+          .join('\n');
+
+      const systemInstruction = `Você é ${activeChatProfessional.name}, um profissional de ${activeChatProfessional.services?.join(', ')} no app TiãoService. Responda ao cliente de forma amigável, profissional e concisa em português do Brasil.`;
+      const contents = `Esta é a nossa conversa até agora:\n${conversationHistory}\n\nO cliente disse: "${text}"\n\nSua Resposta:`;
+      
+      try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents,
+            config: {
+                systemInstruction,
+                thinkingConfig: { thinkingBudget: 0 } // low latency for chat
+            },
+        });
+
+        const aiMessage: ChatMessage = {
+            id: Date.now() + 1,
+            senderId: activeChatProfessional.id,
+            receiverId: currentUser.id,
+            text: response.text,
+            timestamp: new Date().toISOString()
+        };
+        // Artificial delay for realism
+        setTimeout(() => {
+            setChatMessages(prev => [...prev, aiMessage]);
+            setIsSendingMessage(false);
+        }, 800);
+
+      } catch (error) {
+        console.error("AI Error:", error);
+        const errorMessage: ChatMessage = {
+            id: Date.now() + 1,
+            senderId: activeChatProfessional.id,
+            receiverId: currentUser.id,
+            text: "Desculpe, estou com um problema no meu sistema. Poderia repetir?",
+            timestamp: new Date().toISOString()
+        };
+         setTimeout(() => {
+            setChatMessages(prev => [...prev, errorMessage]);
+            setIsSendingMessage(false);
+        }, 800);
+      }
+
+  }, [currentUser, activeChatProfessional, chatMessages, isSendingMessage]);
+
+  const messagesForActiveChat = useMemo(() => {
+      if (!currentUser || !activeChatProfessional) return [];
+      return chatMessages.filter(m => 
+          (m.senderId === currentUser.id && m.receiverId === activeChatProfessional.id) ||
+          (m.senderId === activeChatProfessional.id && m.receiverId === currentUser.id)
+      );
+  }, [chatMessages, currentUser, activeChatProfessional]);
 
   const renderContent = () => {
     switch(view) {
@@ -264,6 +382,7 @@ const App: React.FC = () => {
                 onAiHelpRequest={handleAiHelpRequest} 
                 professionals={allUsers.filter(u => u.role === 'professional' && u.status === 'approved')}
                 onViewProfessional={handleViewProfessional}
+                onBack={handleBack}
                />;
       case 'admin':
         return <AdminPage 
@@ -272,6 +391,7 @@ const App: React.FC = () => {
                     onDeleteUser={handleAdminDeleteUser}
                     onEditUser={(user) => { setEditingUser(user); setActiveModal('editUser'); }}
                     onApproveChange={handleAdminApproveServiceChange}
+                    onBack={handleBack}
                 />;
       case 'profile':
         if (!currentUser) {
@@ -287,6 +407,7 @@ const App: React.FC = () => {
                     onUpdateUser={handleUpdateUser}
                     onAddJobPost={handleAddJobPost}
                     onDeleteJobPost={handleDeleteJobPost}
+                    onBack={handleBack}
                 />
       case 'opportunities':
           if (!currentUser || currentUser.role !== 'professional') {
@@ -297,6 +418,7 @@ const App: React.FC = () => {
                     currentUser={currentUser}
                     jobPosts={jobPosts}
                     users={allUsers}
+                    onBack={handleBack}
                  />;
       case 'professionals':
         return activeCategory ? (
@@ -304,6 +426,8 @@ const App: React.FC = () => {
               category={activeCategory} 
               onViewProfessional={handleViewProfessional}
               professionals={allUsers.filter(u => u.role === 'professional' && u.status === 'approved')}
+              currentUser={currentUser}
+              onBack={handleBack}
             />
           ) : <HomePage onSelectCategory={handleSelectCategory} categories={serviceCategories} />;
       case 'home':
@@ -335,7 +459,8 @@ const App: React.FC = () => {
         <ProfessionalModal 
           professional={selectedProfessional} 
           onClose={handleCloseModals}
-          onRequestService={handleCreateServiceRequest}
+          onRequestService={(professional, service) => handleCreateServiceRequest(professional, service)}
+          onStartChat={handleStartChat}
         />
       )}
       {activeModal === 'login' && <LoginModal onClose={handleCloseModals} onLogin={handleLogin} onSwitchToSignup={() => setActiveModal('signup')} />}
@@ -345,6 +470,16 @@ const App: React.FC = () => {
       {activeModal === 'completeProfile' && currentUser && <CompleteProfileModal user={currentUser} onClose={handleCloseModals} onSave={handleUpdateUser} />}
       {activeModal === 'editUser' && editingUser && <EditUserModal user={editingUser} onClose={handleCloseModals} onSave={handleUpdateUser} />}
       {activeModal === 'cta' && <CtaModal onClose={handleCloseModals} onSubmit={handleCtaSubmit} />}
+      {currentUser && activeChatProfessional && (
+          <ChatModal
+            currentUser={currentUser}
+            professional={activeChatProfessional}
+            messages={messagesForActiveChat}
+            onClose={handleCloseModals}
+            onSendMessage={handleSendMessage}
+            isSending={isSendingMessage}
+          />
+      )}
     </div>
   );
 };

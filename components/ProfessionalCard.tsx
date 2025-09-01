@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { User } from '../../types';
 import { AnimatedButton } from './AnimatedButton';
@@ -15,7 +14,7 @@ export const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional
       <img className="w-full h-48 object-cover" src={professional.imageUrl || 'https://picsum.photos/seed/placeholder/300/300'} alt={professional.name} />
       <div className="p-6 flex flex-col flex-grow">
         <h3 className="text-2xl font-bold text-gray-800">{professional.name}</h3>
-        <p className="text-blue-600 font-semibold mt-1">{professional.service}</p>
+        <p className="text-blue-600 font-semibold mt-1">{professional.services?.join(' • ') || 'Nenhum serviço'}</p>
         
         <div className="flex items-center mt-3 text-gray-600">
           <StarIcon className="w-5 h-5 text-yellow-400" />
@@ -25,7 +24,7 @@ export const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional
         
         <div className="flex items-center mt-2 text-gray-500">
           <MapPinIcon className="w-5 h-5" />
-          <span className="ml-2 text-sm">{professional.location}</span>
+          <span className="ml-2 text-sm">{professional.neighborhood}, {professional.city}</span>
         </div>
 
         {professional.pricing && (

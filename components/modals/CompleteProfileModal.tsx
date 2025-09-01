@@ -50,9 +50,26 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ user
                     <input type="text" name="phone" value={formData.phone || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"/>
                 </div>
             </div>
-             <div>
-                <label htmlFor="location" className="text-sm font-bold text-gray-600 block mb-1">Sua Cidade e Bairro</label>
-                <input type="text" name="location" value={formData.location || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"/>
+            {/* Address Fields */}
+             <div className="space-y-4 pt-4">
+                 <div>
+                    <label htmlFor="street" className="text-sm font-bold text-gray-600 block mb-1">Rua e Número</label>
+                    <input type="text" id="street" name="street" value={formData.street || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Av. Brasil, 123"/>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2">
+                        <label htmlFor="neighborhood" className="text-sm font-bold text-gray-600 block mb-1">Bairro</label>
+                        <input type="text" id="neighborhood" name="neighborhood" value={formData.neighborhood || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Copacabana"/>
+                    </div>
+                    <div>
+                        <label htmlFor="state" className="text-sm font-bold text-gray-600 block mb-1">Estado</label>
+                        <input type="text" id="state" name="state" value={formData.state || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: RJ"/>
+                    </div>
+                </div>
+                 <div>
+                    <label htmlFor="city" className="text-sm font-bold text-gray-600 block mb-1">Cidade</label>
+                    <input type="text" id="city" name="city" value={formData.city || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Rio de Janeiro"/>
+                </div>
             </div>
 
             {/* Professional-only Fields */}

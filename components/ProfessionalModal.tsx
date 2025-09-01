@@ -1,17 +1,18 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { User } from '../types';
 import { AnimatedButton } from './AnimatedButton';
-import { StarIcon, MapPinIcon, XMarkIcon, CurrencyDollarIcon } from './icons';
+import { StarIcon, MapPinIcon, XMarkIcon, CurrencyDollarIcon, ChatBubbleOvalLeftEllipsisIcon } from './icons';
 
 interface ProfessionalModalProps {
   professional: User;
   onClose: () => void;
-  onRequestService: (professional: User) => void;
+  onRequestService: (professional: User, service: string) => void;
+  onStartChat: (professional: User) => void;
 }
 
-export const ProfessionalModal: React.FC<ProfessionalModalProps> = ({ professional, onClose, onRequestService }) => {
-  
+export const ProfessionalModal: React.FC<ProfessionalModalProps> = ({ professional, onClose, onRequestService, onStartChat }) => {
+  const [selectedService, setSelectedService] = useState<string>(professional.services?.[0] || '');
+
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -50,7 +51,7 @@ export const ProfessionalModal: React.FC<ProfessionalModalProps> = ({ profession
             />
             <div className="mt-4 sm:mt-0 sm:ml-6">
               <h2 className="text-3xl font-extrabold text-gray-800">{professional.name}</h2>
-              <p className="text-xl font-semibold text-blue-600">{professional.service}</p>
+              <p className="text-xl font-semibold text-blue-600">{professional.services?.join(' • ')}</p>
               <div className="flex items-center justify-center sm:justify-start mt-2 text-gray-600">
                 <StarIcon className="w-5 h-5 text-yellow-400" />
                 <span className="ml-1 font-bold text-gray-700">{(professional.rating || 0).toFixed(1)}</span>
@@ -58,7 +59,7 @@ export const ProfessionalModal: React.FC<ProfessionalModalProps> = ({ profession
               </div>
               <div className="flex items-center justify-center sm:justify-start mt-1 text-gray-500">
                 <MapPinIcon className="w-5 h-5" />
-                <span className="ml-2 text-sm">{professional.location}</span>
+                <span className="ml-2 text-sm">{professional.neighborhood}, {professional.city}</span>
               </div>
             </div>
           </div>
@@ -97,10 +98,34 @@ export const ProfessionalModal: React.FC<ProfessionalModalProps> = ({ profession
           </div>
         </div>
         
-        <div className="p-6 bg-gray-50 rounded-b-2xl sticky bottom-0">
-          <AnimatedButton onClick={() => onRequestService(professional)} className="w-full text-lg">
-            Solicitar Serviço
-          </AnimatedButton>
+        <div className="p-6 bg-gray-50 rounded-b-2xl sticky bottom-0 space-y-3">
+           {(professional.services?.length ?? 0) > 1 && (
+            <div>
+              <label htmlFor="service-select" className="text-sm font-bold text-gray-600 block mb-1">Selecione o serviço desejado:</label>
+              <select 
+                  id="service-select"
+                  value={selectedService}
+                  onChange={(e) => setSelectedService(e.target.value)}
+                  className="w-full p-3 text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+              >
+                  {professional.services?.map(service => (
+                      <option key={service} value={service}>{service}</option>
+                  ))}
+              </select>
+            </div>
+           )}
+          <div className="flex flex-col sm:flex-row gap-3">
+              <AnimatedButton 
+                onClick={() => onStartChat(professional)} 
+                className="w-full text-lg !bg-white !text-blue-600 border-2 border-blue-600 hover:!bg-blue-50 flex-1 flex items-center justify-center gap-2"
+              >
+                  <ChatBubbleOvalLeftEllipsisIcon className="w-6 h-6" />
+                  Conversar
+              </AnimatedButton>
+              <AnimatedButton onClick={() => onRequestService(professional, selectedService)} className="w-full text-lg flex-1" disabled={!selectedService}>
+                Solicitar {selectedService || 'Serviço'}
+              </AnimatedButton>
+          </div>
         </div>
       </div>
        <style>{`

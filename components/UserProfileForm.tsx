@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { User } from '../types';
 import { AnimatedButton } from './AnimatedButton';
@@ -14,7 +13,7 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onSave, 
   const [formData, setFormData] = useState<User>(user);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -24,16 +23,19 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onSave, 
     setFormData(prev => ({ ...prev, pricing: { description: value } }));
   };
   
-  const handleServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newService = e.target.value;
-      if (!isAdminEditing && user.role === 'professional' && user.service !== newService) {
-        // Professionals requesting a change need admin approval
-        setFormData(prev => ({...prev, serviceChangeRequest: newService}));
-      } else {
-        // Admins can change it directly
-        setFormData(prev => ({ ...prev, service: newService, serviceChangeRequest: undefined }));
-      }
-  }
+  const handleServiceToggle = (toggledService: string) => {
+    const currentServices = formData.servicesChangeRequest ?? formData.services ?? [];
+    const newServices = currentServices.includes(toggledService)
+        ? currentServices.filter(s => s !== toggledService)
+        : [...currentServices, toggledService];
+
+    if (isAdminEditing) {
+        setFormData(prev => ({ ...prev, services: newServices, servicesChangeRequest: undefined }));
+    } else {
+        // For professionals, any change goes into servicesChangeRequest
+        setFormData(prev => ({ ...prev, servicesChangeRequest: newServices }));
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +43,8 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onSave, 
     setShowConfirmation(true);
     setTimeout(() => setShowConfirmation(false), 3000);
   };
+
+  const servicesForSelection = formData.servicesChangeRequest ?? formData.services ?? [];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-inner">
@@ -59,21 +63,49 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onSave, 
                 <input type="text" name="phone" value={formData.phone || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"/>
             </div>
         </div>
-        <div>
-            <label htmlFor="location" className="text-sm font-bold text-gray-600 block mb-1">Sua Cidade e Bairro</label>
-            <input type="text" name="location" value={formData.location || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"/>
+        
+        {/* Address Fields */}
+        <div className="space-y-4 pt-4 border-t mt-4">
+             <h3 className="text-md font-bold text-gray-700">Seu Endereço</h3>
+             <div>
+                <label htmlFor="street" className="text-sm font-bold text-gray-600 block mb-1">Rua e Número</label>
+                <input type="text" id="street" name="street" value={formData.street || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Av. Brasil, 123"/>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label htmlFor="neighborhood" className="text-sm font-bold text-gray-600 block mb-1">Bairro</label>
+                    <input type="text" id="neighborhood" name="neighborhood" value={formData.neighborhood || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Copacabana"/>
+                </div>
+                <div>
+                    <label htmlFor="city" className="text-sm font-bold text-gray-600 block mb-1">Cidade</label>
+                    <input type="text" id="city" name="city" value={formData.city || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: Rio de Janeiro"/>
+                </div>
+            </div>
+            <div>
+                <label htmlFor="state" className="text-sm font-bold text-gray-600 block mb-1">Estado (UF)</label>
+                <input type="text" id="state" name="state" value={formData.state || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: RJ"/>
+            </div>
         </div>
 
         {user.role === 'professional' && (
             <div className="p-4 bg-orange-50 rounded-lg space-y-4 mt-4 border-t-2 border-orange-200 pt-6">
                 <h3 className="font-bold text-lg text-orange-700">Informações Profissionais</h3>
                 <div>
-                    <label htmlFor="service" className="text-sm font-bold text-gray-600 block mb-1">Área de Atuação</label>
-                    <select name="service" value={formData.serviceChangeRequest || formData.service} onChange={handleServiceChange} className="w-full p-3 text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
-                      {serviceCategories.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
-                    </select>
-                    {formData.serviceChangeRequest && (
-                        <p className="text-xs text-yellow-700 mt-1">Sua solicitação para mudar para "{formData.serviceChangeRequest}" está pendente de aprovação.</p>
+                    <label className="text-sm font-bold text-gray-600 block">Área(s) de Atuação</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      {serviceCategories.map(cat => (
+                        <button
+                          type="button"
+                          key={cat.name}
+                          onClick={() => handleServiceToggle(cat.name)}
+                          className={`p-2 text-sm rounded-lg border-2 transition-colors text-center font-medium ${servicesForSelection.includes(cat.name) ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 border-gray-200 hover:bg-orange-50'}`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                    {formData.servicesChangeRequest && (
+                        <p className="text-xs text-yellow-700 mt-2 p-2 bg-yellow-100 rounded-md">Sua solicitação para alterar suas especialidades está pendente de aprovação.</p>
                     )}
                 </div>
                 <div>
