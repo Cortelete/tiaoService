@@ -1,10 +1,11 @@
 
 
+
 import React, { useState, useMemo } from 'react';
 import type { User, ServiceRequest, ServiceRequestStatus, JobPost } from '../../types';
 import { AnimatedButton } from '../AnimatedButton';
 import { UserProfileForm } from '../UserProfileForm';
-import { UsersIcon, TrashIcon } from '../icons';
+import { UsersIcon, TrashIcon, UserCircleIcon, ClipboardDocumentListIcon } from '../icons';
 import { serviceCategories } from '../../constants';
 // Fix: Import the BackButton component to resolve the 'Cannot find name' error.
 import { BackButton } from '../BackButton';
@@ -134,8 +135,8 @@ const ClientProfile: React.FC<{
 };
 
 // Professional Dashboard View
-const ProfessionalDashboard: React.FC<{ professional: User, requests: ServiceRequest[], users: User[], onUpdateStatus: (id: number, status: ServiceRequestStatus) => void, onUpdateUser: (user:User) => void }> = ({ professional, requests, users, onUpdateStatus, onUpdateUser }) => {
-    const [activeTab, setActiveTab] = useState<'requests' | 'ongoing' | 'history' | 'clients' | 'edit'>('requests');
+const ProfessionalDashboard: React.FC<{ professional: User, requests: ServiceRequest[], users: User[], onUpdateStatus: (id: number, status: ServiceRequestStatus) => void }> = ({ professional, requests, users, onUpdateStatus }) => {
+    const [activeTab, setActiveTab] = useState<'requests' | 'ongoing' | 'history' | 'clients'>('requests');
     const myRequests = requests.filter(r => r.professionalId === professional.id);
 
     const pendingRequests = useMemo(() => myRequests.filter(r => r.status === 'pending'), [myRequests]);
@@ -179,7 +180,6 @@ const ProfessionalDashboard: React.FC<{ professional: User, requests: ServiceReq
         { id: 'ongoing', label: 'Em Andamento', icon: null },
         { id: 'history', label: 'Histórico', icon: null },
         { id: 'clients', label: 'Meus Clientes', icon: UsersIcon },
-        { id: 'edit', label: 'Editar Perfil', icon: null },
     ];
 
     return (
@@ -226,7 +226,6 @@ const ProfessionalDashboard: React.FC<{ professional: User, requests: ServiceReq
                         )}
                     </div>
                 )}
-                {activeTab === 'edit' && <UserProfileForm user={professional} onSave={onUpdateUser} />}
             </div>
         </div>
     );
@@ -234,33 +233,61 @@ const ProfessionalDashboard: React.FC<{ professional: User, requests: ServiceReq
 
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ currentUser, users, serviceRequests, jobPosts, onUpdateRequestStatus, onUpdateUser, onAddJobPost, onDeleteJobPost, onBack }) => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'profile'>('dashboard');
+
+  const mainTabs = [
+      { id: 'dashboard', label: 'Painel', icon: ClipboardDocumentListIcon },
+      { id: 'profile', label: 'Meu Perfil', icon: UserCircleIcon }
+  ];
+
   return (
     <div>
       <BackButton onClick={onBack} />
       <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold text-gray-800">
-          Olá, <span className="animated-gradient bg-gradient-to-r from-orange-500 to-blue-600 bg-clip-text text-transparent">{currentUser.name.split(' ')[0]}</span>!
+          Olá, <span className="animated-gradient bg-gradient-to-r from-orange-500 to-blue-600 bg-clip-text text-transparent">{currentUser.nickname || currentUser.name.split(' ')[0]}</span>!
         </h1>
-        <p className="text-lg text-gray-600 mt-2">Bem-vindo(a) ao seu painel.</p>
+        <p className="text-lg text-gray-600 mt-2">Bem-vindo(a) à sua área pessoal.</p>
+      </div>
+      
+       {/* Main Tabs */}
+      <div className="mb-8 flex justify-center border-b border-gray-200">
+          {mainTabs.map(tab => (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2 px-6 py-3 font-semibold text-lg transition-colors ${activeTab === tab.id ? 'text-orange-600 border-b-2 border-orange-600' : 'text-gray-500 hover:text-gray-800'}`}
+              >
+                <tab.icon className="w-6 h-6" />
+                {tab.label}
+              </button>
+          ))}
       </div>
 
-      {currentUser.role === 'professional' ? (
-        <ProfessionalDashboard 
-            professional={currentUser} 
-            requests={serviceRequests}
-            users={users}
-            onUpdateStatus={onUpdateRequestStatus}
-            onUpdateUser={onUpdateUser}
-        />
-      ) : (
-        <ClientProfile 
-            client={currentUser} 
-            requests={serviceRequests}
-            users={users}
-            jobPosts={jobPosts}
-            onAddJobPost={onAddJobPost}
-            onDeleteJobPost={onDeleteJobPost}
-        />
+      {activeTab === 'dashboard' && (
+          currentUser.role === 'professional' ? (
+            <ProfessionalDashboard 
+                professional={currentUser} 
+                requests={serviceRequests}
+                users={users}
+                onUpdateStatus={onUpdateRequestStatus}
+            />
+          ) : (
+            <ClientProfile 
+                client={currentUser} 
+                requests={serviceRequests}
+                users={users}
+                jobPosts={jobPosts}
+                onAddJobPost={onAddJobPost}
+                onDeleteJobPost={onDeleteJobPost}
+            />
+          )
+      )}
+
+      {activeTab === 'profile' && (
+          <div className="max-w-4xl mx-auto">
+            <UserProfileForm user={currentUser} onSave={onUpdateUser} />
+          </div>
       )}
     </div>
   );

@@ -9,13 +9,49 @@ interface AdminPageProps {
   onUpdateUserStatus: (userId: number, status: UserStatus) => void;
   onDeleteUser: (userId: number) => void;
   onEditUser: (user: User) => void;
-  onApproveChange: (userId: number) => void;
+  onApproveServiceChange: (userId: number) => void;
+  onApproveProfileChange: (userId: number) => void;
   onBack: () => void;
 }
 
-export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus, onDeleteUser, onEditUser, onApproveChange, onBack }) => {
+const RenderChanges: React.FC<{ user: User }> = ({ user }) => {
+    if (!user.profileChangeRequest) return null;
+
+    const changes = user.profileChangeRequest;
+    const readableKeys: Record<string, string> = {
+        name: 'Nome',
+        nickname: 'Apelido',
+        phone: 'Telefone',
+        street: 'Rua',
+        neighborhood: 'Bairro',
+        city: 'Cidade',
+        state: 'Estado',
+        cpfCnpj: 'CPF/CNPJ',
+        bio: 'Bio',
+        imageUrl: 'Foto',
+        pricing: 'Preços',
+    };
+
+    return (
+        <ul className="text-xs text-gray-600 mt-1 space-y-1">
+            {Object.entries(changes).map(([key, value]) => {
+                const oldValue = key === 'pricing' ? (user as any)[key]?.description : (user as any)[key];
+                const newValue = key === 'pricing' ? (value as any)?.description : value;
+                return (
+                    <li key={key} className="truncate">
+                        <span className="font-bold">{readableKeys[key] || key}:</span> "{String(oldValue || 'vazio')}" → "{String(newValue || 'vazio')}"
+                    </li>
+                );
+            })}
+        </ul>
+    );
+};
+
+
+export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus, onDeleteUser, onEditUser, onApproveServiceChange, onApproveProfileChange, onBack }) => {
   const pendingProfessionals = users.filter(u => u.role === 'professional' && u.status === 'pending');
   const serviceChangeRequests = users.filter(u => u.role === 'professional' && u.servicesChangeRequest && u.servicesChangeRequest.length > 0);
+  const profileChangeRequests = users.filter(u => u.role === 'professional' && u.profileChangeRequest && Object.keys(u.profileChangeRequest).length > 0);
   const otherUsers = users.filter(u => u.role !== 'admin');
 
   const getStatusBadge = (status?: UserStatus) => {
@@ -73,20 +109,35 @@ export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus,
             )) : <p className="text-yellow-700 italic">Nenhuma aprovação pendente.</p>}
           </div>
         </div>
-        {/* Service Change Requests */}
+
+        {/* Change Requests */}
          <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold text-blue-800 mb-4">Mudanças de Serviço ({serviceChangeRequests.length})</h2>
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-             {serviceChangeRequests.length > 0 ? serviceChangeRequests.map(user => (
-              <div key={user.id} className="p-3 bg-white rounded-lg flex justify-between items-center">
-                <div>
-                    <p className="font-semibold text-gray-800">{user.name}</p>
-                    <p className="text-sm text-gray-500">{user.services?.join(', ')} → <span className="font-bold text-blue-600">{user.servicesChangeRequest?.join(', ')}</span></p>
-                </div>
-                <AnimatedButton onClick={() => onApproveChange(user.id)} className="!bg-blue-500 hover:!bg-blue-600 !px-3 !py-1.5 text-sm">Aprovar Mudança</AnimatedButton>
-              </div>
-            )) : <p className="text-blue-700 italic">Nenhuma solicitação.</p>}
-          </div>
+            <h2 className="text-2xl font-bold text-blue-800 mb-4">Solicitações de Mudança ({serviceChangeRequests.length + profileChangeRequests.length})</h2>
+             <div className="space-y-4 max-h-60 overflow-y-auto">
+                {serviceChangeRequests.length > 0 && serviceChangeRequests.map(user => (
+                  <div key={user.id} className="p-3 bg-white rounded-lg">
+                    <div className="flex justify-between items-center">
+                        <p className="font-semibold text-gray-800">{user.name}</p>
+                         <AnimatedButton onClick={() => onApproveServiceChange(user.id)} className="!bg-blue-500 hover:!bg-blue-600 !px-3 !py-1.5 text-sm">Aprovar Serviços</AnimatedButton>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{user.services?.join(', ')} → <span className="font-bold text-blue-600">{user.servicesChangeRequest?.join(', ')}</span></p>
+                  </div>
+                ))}
+
+                 {profileChangeRequests.length > 0 && profileChangeRequests.map(user => (
+                  <div key={user.id} className="p-3 bg-white rounded-lg">
+                    <div className="flex justify-between items-center">
+                       <p className="font-semibold text-gray-800">{user.name}</p>
+                        <AnimatedButton onClick={() => onApproveProfileChange(user.id)} className="!bg-blue-500 hover:!bg-blue-600 !px-3 !py-1.5 text-sm">Aprovar Perfil</AnimatedButton>
+                    </div>
+                     <RenderChanges user={user} />
+                  </div>
+                ))}
+
+                {serviceChangeRequests.length === 0 && profileChangeRequests.length === 0 && (
+                     <p className="text-blue-700 italic">Nenhuma solicitação de mudança.</p>
+                )}
+            </div>
         </div>
       </div>
       

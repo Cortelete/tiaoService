@@ -39,7 +39,38 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onSave, 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, isProfileComplete: true });
+    let userToSave = { ...formData };
+
+    if (user.role === 'professional' && !isAdminEditing) {
+        const profileChanges: Partial<User> = {};
+        const fieldsToCompare: (keyof User)[] = ['name', 'nickname', 'phone', 'street', 'neighborhood', 'city', 'state', 'cpfCnpj', 'bio', 'imageUrl'];
+        
+        fieldsToCompare.forEach(field => {
+            if (formData[field] !== user[field]) {
+                // Fix: Cast profileChanges to 'any' to allow dynamic property assignment.
+                // This resolves a TypeScript error where the compiler cannot infer the correct type
+                // for 'field' when it's a union of keys.
+                (profileChanges as any)[field] = formData[field];
+            }
+        });
+        
+        if (JSON.stringify(formData.pricing) !== JSON.stringify(user.pricing)) {
+            profileChanges.pricing = formData.pricing;
+        }
+
+        // Only create a change request if there are actual changes
+        if (Object.keys(profileChanges).length > 0) {
+            userToSave = { 
+                ...user, // Base on original user data to prevent direct changes
+                servicesChangeRequest: formData.servicesChangeRequest, // Services are handled separately
+                profileChangeRequest: { ...user.profileChangeRequest, ...profileChanges } // Merge with existing requests
+            };
+        } else {
+             userToSave = { ...user, servicesChangeRequest: formData.servicesChangeRequest };
+        }
+    }
+
+    onSave(userToSave);
     setShowConfirmation(true);
     setTimeout(() => setShowConfirmation(false), 3000);
   };
@@ -47,20 +78,47 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onSave, 
   const servicesForSelection = formData.servicesChangeRequest ?? formData.services ?? [];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg shadow-inner">
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl shadow-lg">
         {showConfirmation && (
             <div className="bg-green-100 text-green-800 p-3 rounded-lg text-center font-semibold">
-                Perfil atualizado com sucesso!
+                {user.role === 'professional' && !isAdminEditing ? 'Suas alterações foram enviadas para aprovação!' : 'Perfil atualizado com sucesso!'}
             </div>
         )}
+        {user.role === 'professional' && !isAdminEditing && (
+            <div className="bg-yellow-100 text-yellow-800 p-3 rounded-lg text-center font-semibold text-sm">
+                Para sua segurança, alterações em dados importantes do perfil precisam ser aprovadas pela nossa equipe.
+            </div>
+        )}
+        {user.profileChangeRequest && (
+            <div className="bg-blue-100 text-blue-800 p-3 rounded-lg text-center font-semibold text-sm">
+                Você possui alterações de perfil pendentes de aprovação.
+            </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label htmlFor="name" className="text-sm font-bold text-gray-600 block mb-1">Nome Completo</label>
                 <input type="text" name="name" value={formData.name || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"/>
             </div>
+             <div>
+                <label htmlFor="nickname" className="text-sm font-bold text-gray-600 block mb-1">Apelido (como aparecerá para outros)</label>
+                <input type="text" name="nickname" value={formData.nickname || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"/>
+            </div>
+        </div>
+
+        <div>
+            <label htmlFor="bio" className="text-sm font-bold text-gray-600 block mb-1">Bio</label>
+            <textarea name="bio" value={formData.bio || ''} onChange={handleInputChange} rows={3} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder={user.role === 'professional' ? "Fale um pouco sobre seu trabalho..." : "Fale um pouco sobre você..."}></textarea>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label htmlFor="phone" className="text-sm font-bold text-gray-600 block mb-1">Telefone</label>
                 <input type="text" name="phone" value={formData.phone || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"/>
+            </div>
+            <div>
+                <label htmlFor="imageUrl" className="text-sm font-bold text-gray-600 block mb-1">URL da sua Foto de Perfil</label>
+                <input type="text" name="imageUrl" value={formData.imageUrl || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="https://exemplo.com/foto.jpg"/>
             </div>
         </div>
         
@@ -108,18 +166,14 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onSave, 
                         <p className="text-xs text-yellow-700 mt-2 p-2 bg-yellow-100 rounded-md">Sua solicitação para alterar suas especialidades está pendente de aprovação.</p>
                     )}
                 </div>
-                <div>
-                    <label htmlFor="bio" className="text-sm font-bold text-gray-600 block mb-1">Biografia</label>
-                    <textarea name="bio" value={formData.bio || ''} onChange={handleInputChange} rows={3} className="w-full p-3 text-gray-700 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Fale um pouco sobre seu trabalho..."></textarea>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <label htmlFor="cpfCnpj" className="text-sm font-bold text-gray-600 block mb-1">CPF ou CNPJ</label>
+                         <input type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"/>
+                    </div>
                     <div>
                         <label htmlFor="pricing" className="text-sm font-bold text-gray-600 block mb-1">Política de Preços</label>
                         <input type="text" name="pricing" value={formData.pricing?.description || ''} onChange={handlePricingChange} className="w-full p-3 text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Ex: A partir de R$100"/>
-                    </div>
-                    <div>
-                        <label htmlFor="imageUrl" className="text-sm font-bold text-gray-600 block mb-1">URL da sua Foto de Perfil</label>
-                        <input type="text" name="imageUrl" value={formData.imageUrl || ''} onChange={handleInputChange} className="w-full p-3 text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="https://exemplo.com/foto.jpg"/>
                     </div>
                 </div>
             </div>

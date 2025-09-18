@@ -17,7 +17,8 @@ import { EditUserModal } from './components/modals/EditUserModal';
 import { ConfirmationModal } from './components/modals/ConfirmationModal';
 import { CtaModal } from './components/modals/CtaModal';
 import { ChatModal } from './components/modals/ChatModal';
-import type { User, UserCredentials, UserStatus, ServiceRequest, ServiceRequestStatus, JobPost, ActiveModal, AiHelpResponse, ChatMessage } from './types';
+import { ServiceRequestModal } from './components/modals/ServiceRequestModal';
+import type { User, UserCredentials, UserStatus, ServiceRequest, ServiceRequestStatus, JobPost, ActiveModal, AiHelpResponse, ChatMessage, ServiceRequestFormData } from './types';
 import { serviceCategories, users as initialUsers, serviceRequests as initialServiceRequests, jobPosts as initialJobPosts, initialChatMessages } from './constants';
 
 type View = 'home' | 'professionals' | 'admin' | 'profile' | 'opportunities' | 'ai-help';
@@ -41,6 +42,7 @@ const App: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialChatMessages);
   const [activeChatProfessional, setActiveChatProfessional] = useState<User | null>(null);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [serviceRequestTarget, setServiceRequestTarget] = useState<{ professional: User; service: string; } | null>(null);
 
   const navigateTo = useCallback((newView: View) => {
     setNavigationHistory(prev => [...prev, newView]);
@@ -74,7 +76,8 @@ const App: React.FC = () => {
     setActiveModal(null);
     setSelectedProfessional(null);
     setEditingUser(null);
-    setActiveChatProfessional(null); // Close chat as well
+    setActiveChatProfessional(null);
+    setServiceRequestTarget(null);
   }, []);
 
   const handleLogin = useCallback((credentials: UserCredentials): { success: boolean, message?: string } => {
@@ -150,25 +153,38 @@ const App: React.FC = () => {
     handleGoHome();
   }, [handleGoHome]);
 
-  const handleCreateServiceRequest = useCallback((professional: User, serviceName: string) => {
+  const handleOpenServiceRequestModal = useCallback((professional: User, service: string) => {
     if (!currentUser) {
-      setSelectedProfessional(null);
       setActiveModal('login');
       return;
     }
+    setSelectedProfessional(null); // Close professional modal
+    setServiceRequestTarget({ professional, service });
+    setActiveModal('serviceRequest');
+  }, [currentUser]);
+
+  const handleConfirmServiceRequest = useCallback((formData: ServiceRequestFormData) => {
+    if (!currentUser || !serviceRequestTarget) return;
+
     const newRequest: ServiceRequest = {
         id: Date.now(),
         clientId: currentUser.id,
-        professionalId: professional.id,
-        serviceName,
+        professionalId: serviceRequestTarget.professional.id,
+        serviceName: serviceRequestTarget.service,
         status: 'pending',
         createdAt: new Date().toISOString(),
+        preferredDate: formData.preferredDate,
+        preferredPeriod: formData.preferredPeriod,
+        details: {
+            description: formData.description,
+            ...formData.dynamicFields,
+        },
     };
     setServiceRequests(prev => [newRequest, ...prev]);
-    setSelectedProfessional(null);
-    setActiveChatProfessional(null); // Close chat if open
+    
+    setServiceRequestTarget(null);
     setActiveModal('confirmation');
-  }, [currentUser]);
+  }, [currentUser, serviceRequestTarget]);
 
   const handleUpdateServiceRequestStatus = useCallback((requestId: number, status: ServiceRequestStatus) => {
       setServiceRequests(prev => prev.map(req => req.id === requestId ? { ...req, status } : req));
@@ -241,6 +257,18 @@ const App: React.FC = () => {
     const user = allUsers.find(u => u.id === userId);
     if (user && user.servicesChangeRequest) {
       handleUpdateUser({ ...user, services: user.servicesChangeRequest, servicesChangeRequest: undefined });
+    }
+  }, [allUsers, handleUpdateUser]);
+
+  const handleAdminApproveProfileChange = useCallback((userId: number) => {
+    const user = allUsers.find(u => u.id === userId);
+    if (user && user.profileChangeRequest) {
+      const updatedUser = {
+        ...user,
+        ...user.profileChangeRequest,
+        profileChangeRequest: undefined,
+      };
+      handleUpdateUser(updatedUser);
     }
   }, [allUsers, handleUpdateUser]);
   
@@ -390,7 +418,8 @@ const App: React.FC = () => {
                     onUpdateUserStatus={handleAdminUpdateUserStatus}
                     onDeleteUser={handleAdminDeleteUser}
                     onEditUser={(user) => { setEditingUser(user); setActiveModal('editUser'); }}
-                    onApproveChange={handleAdminApproveServiceChange}
+                    onApproveServiceChange={handleAdminApproveServiceChange}
+                    onApproveProfileChange={handleAdminApproveProfileChange}
                     onBack={handleBack}
                 />;
       case 'profile':
@@ -452,14 +481,14 @@ const App: React.FC = () => {
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
         {renderContent()}
       </main>
-      <Footer onOpenCtaModal={() => setActiveModal('cta')} />
+      <Footer />
       
       {/* Modals */}
       {selectedProfessional && (
         <ProfessionalModal 
           professional={selectedProfessional} 
           onClose={handleCloseModals}
-          onRequestService={(professional, service) => handleCreateServiceRequest(professional, service)}
+          onRequestService={handleOpenServiceRequestModal}
           onStartChat={handleStartChat}
         />
       )}
@@ -470,6 +499,14 @@ const App: React.FC = () => {
       {activeModal === 'completeProfile' && currentUser && <CompleteProfileModal user={currentUser} onClose={handleCloseModals} onSave={handleUpdateUser} />}
       {activeModal === 'editUser' && editingUser && <EditUserModal user={editingUser} onClose={handleCloseModals} onSave={handleUpdateUser} />}
       {activeModal === 'cta' && <CtaModal onClose={handleCloseModals} onSubmit={handleCtaSubmit} />}
+      {activeModal === 'serviceRequest' && serviceRequestTarget && (
+        <ServiceRequestModal
+          professional={serviceRequestTarget.professional}
+          service={serviceRequestTarget.service}
+          onClose={handleCloseModals}
+          onSubmit={handleConfirmServiceRequest}
+        />
+      )}
       {currentUser && activeChatProfessional && (
           <ChatModal
             currentUser={currentUser}

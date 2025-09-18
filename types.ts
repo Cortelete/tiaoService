@@ -27,6 +27,8 @@ export interface User {
   role: UserRole;
   status?: UserStatus;
   isProfileComplete: boolean;
+  nickname?: string;
+  bio?: string;
 
   // Common fields
   phone: string;
@@ -39,7 +41,6 @@ export interface User {
   // Professional-specific fields
   services?: string[];
   cpfCnpj?: string;
-  bio?: string;
   imageUrl?: string;
   rating?: number;
   reviewsCount?: number;
@@ -48,13 +49,14 @@ export interface User {
   pricing?: Pricing;
   availability?: Record<string, string>;
   servicesChangeRequest?: string[]; // Holds new services for admin approval
+  profileChangeRequest?: Partial<Pick<User, 'name' | 'nickname' | 'phone' | 'street' | 'neighborhood' | 'city' | 'state' | 'cpfCnpj' | 'bio' | 'imageUrl' | 'pricing'>>;
 }
 
-// Fix: Changed comma to pipe to create a union type for the keys.
 export type UserCredentials = Pick<User, 'email' | 'password'>;
 
 // Service Request Management
 export type ServiceRequestStatus = 'pending' | 'accepted' | 'completed' | 'declined' | 'cancelled';
+export type ServicePeriod = 'Manhã' | 'Tarde' | 'Noite';
 
 export interface ServiceRequest {
   id: number;
@@ -63,6 +65,12 @@ export interface ServiceRequest {
   serviceName: string;
   status: ServiceRequestStatus;
   createdAt: string;
+  preferredDate?: string;
+  preferredPeriod?: ServicePeriod;
+  details?: {
+    description: string;
+    [key: string]: string; // For dynamic fields
+  };
 }
 
 // Client Job Postings
@@ -93,5 +101,21 @@ export interface ChatMessage {
     timestamp: string;
 }
 
-export type ActiveModal = 'login' | 'signup' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'confirmation' | 'cta' | null;
+// Dynamic Form Generation for Service Request
+export interface FormField {
+    name: string;
+    label: string;
+    type: 'text' | 'select' | 'textarea';
+    placeholder?: string;
+    options?: string[];
+}
+
+export interface ServiceRequestFormData {
+    preferredDate: string;
+    preferredPeriod: ServicePeriod;
+    description: string;
+    dynamicFields: Record<string, string>;
+}
+
+export type ActiveModal = 'login' | 'signup' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'confirmation' | 'cta' | 'serviceRequest' | null;
 export type View = 'home' | 'professionals' | 'admin' | 'profile' | 'opportunities' | 'ai-help';

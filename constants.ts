@@ -1,4 +1,4 @@
-import type { ServiceCategory, User, ServiceRequest, JobPost, ChatMessage } from './types';
+import type { ServiceCategory, User, ServiceRequest, JobPost, ChatMessage, FormField } from './types';
 import { 
   WrenchScrewdriverIcon, BoltIcon, PaintBrushIcon, ShieldCheckIcon, TruckIcon, ComputerDesktopIcon,
   CogIcon, BeakerIcon, FireIcon, HomeModernIcon, KeyIcon, PaintBucketIcon, TvIcon, WifiIcon, UsersIcon as DiaristaIcon, BuildingStorefrontIcon
@@ -39,12 +39,14 @@ export const users: User[] = [
   { 
     id: 1, 
     name: 'Ana Cliente', 
+    nickname: 'Aninha',
     email: 'cliente@tiao.com', 
     password: '123', 
     role: 'client', 
     isProfileComplete: true,
     phone: '21987654321',
     street: 'Av. Vieira Souto, 123', neighborhood: 'Leblon', city: 'Rio de Janeiro', state: 'RJ', regionId: 1,
+    bio: 'Adoro viajar e experimentar novas comidas. Estou sempre em busca de profissionais confiáveis para pequenos reparos em casa.'
   },
   { 
     id: 6, 
@@ -580,3 +582,23 @@ export const initialChatMessages: ChatMessage[] = [
         timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
     },
 ];
+
+
+export const serviceRequestFormFields: Record<string, FormField[]> = {
+  'Encanador': [
+    { name: 'tipoVazamento', label: 'Qual o tipo de problema?', type: 'select', options: ['Selecione...', 'Torneira pingando', 'Vazamento na parede', 'Vaso sanitário', 'Ralo entupido', 'Outro'] },
+    { name: 'urgencia', label: 'Qual a urgência?', type: 'select', options: ['Selecione...', 'Baixa', 'Média', 'Alta - Vazando agora'] }
+  ],
+  'Eletricista': [
+    { name: 'disjuntor', label: 'O problema é no disjuntor?', type: 'select', options: ['Selecione...', 'Sim', 'Não', 'Não sei'] },
+    { name: 'local', label: 'Qual o cômodo/local do problema?', type: 'text', placeholder: 'Ex: Chuveiro do banheiro social' }
+  ],
+  'Pintor': [
+      { name: 'area', label: 'Qual a área aproximada a ser pintada (m²)?', type: 'text', placeholder: 'Ex: 25' },
+      { name: 'tipo', label: 'Tipo de pintura?', type: 'select', options: ['Selecione...', 'Interna', 'Externa (fachada)', 'Apenas uma parede', 'Móveis'] }
+  ],
+  'Diarista': [
+      { name: 'comodos', label: 'Quantos cômodos?', type: 'text', placeholder: 'Ex: 2 quartos, 1 sala, 1 cozinha, 2 banheiros' },
+      { name: 'material', label: 'Material de limpeza incluso?', type: 'select', options: ['Selecione...', 'Sim, por conta do profissional', 'Não, eu forneço o material'] }
+  ]
+};
