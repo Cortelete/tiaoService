@@ -1,88 +1,82 @@
 import React from 'react';
 
+export type UserRole = 'client' | 'professional' | 'admin';
+export type UserStatus = 'pending' | 'approved' | 'blocked';
+export type ServicePeriod = 'Manhã' | 'Tarde' | 'Noite';
+export type TransactionType = 'deposit' | 'withdrawal' | 'payment_sent' | 'payment_received' | 'bonus';
+export type ActiveModal = 'login' | 'signup' | 'professional' | 'chat' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'serviceRequest' | 'confirmation' | 'cta' | 'addFunds' | 'withdraw' | 'servicePayment';
+
+
 export interface ServiceCategory {
   name: string;
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
 }
 
-export interface Review {
-  id: number;
-  author: string;
-  rating: number;
-  comment: string;
+export interface UserPricing {
+    description: string;
 }
 
-export interface Pricing {
-  description: string;
+export interface Transaction {
+    id: string;
+    type: TransactionType;
+    amountTC: number; // Amount in TiãoCoins
+    brlAmount?: number; // Optional: corresponding BRL amount for deposits/withdrawals
+    description: string;
+    timestamp: string;
+    fromUserId?: number;
+    toUserId?: number;
 }
-
-export type UserRole = 'client' | 'professional' | 'admin';
-export type UserStatus = 'pending' | 'approved' | 'blocked';
 
 export interface User {
   id: number;
-  name: string;
   email: string;
-  password?: string;
-  role: UserRole;
-  status?: UserStatus;
-  isProfileComplete: boolean;
+  password?: string; // Optional for security reasons on frontend
+  name:string;
   nickname?: string;
-  bio?: string;
-
-  // Common fields
+  role: UserRole;
   phone: string;
   street: string;
   neighborhood: string;
   city: string;
   state: string;
-  regionId: number; // For proximity searches
+  regionId: number;
+  isProfileComplete: boolean;
+  status?: UserStatus;
   
   // Professional-specific fields
   services?: string[];
   cpfCnpj?: string;
+  bio?: string;
   imageUrl?: string;
   rating?: number;
   reviewsCount?: number;
-
-  reviews?: Review[];
-  pricing?: Pricing;
-  availability?: Record<string, string>;
-  servicesChangeRequest?: string[]; // Holds new services for admin approval
-  profileChangeRequest?: Partial<Pick<User, 'name' | 'nickname' | 'phone' | 'street' | 'neighborhood' | 'city' | 'state' | 'cpfCnpj' | 'bio' | 'imageUrl' | 'pricing'>>;
+  pricing?: UserPricing;
+  servicesChangeRequest?: string[];
+  profileChangeRequest?: Partial<User>;
+  walletBalanceTC?: number; // TiãoCoin balance
+  transactions?: Transaction[];
 }
 
-export type UserCredentials = Pick<User, 'email' | 'password'>;
-
-// Service Request Management
-export type ServiceRequestStatus = 'pending' | 'accepted' | 'completed' | 'declined' | 'cancelled';
-export type ServicePeriod = 'Manhã' | 'Tarde' | 'Noite';
-
-export interface ServiceRequest {
-  id: number;
-  clientId: number;
-  professionalId: number;
-  serviceName: string;
-  status: ServiceRequestStatus;
-  createdAt: string;
-  preferredDate?: string;
-  preferredPeriod?: ServicePeriod;
-  details?: {
-    description: string;
-    [key: string]: string; // For dynamic fields
-  };
+export interface UserCredentials {
+  email: string;
+  password?: string;
 }
 
-// Client Job Postings
+export interface ChatMessage {
+  senderId: number;
+  text: string;
+  timestamp: string;
+}
+
 export interface JobPost {
     id: number;
     clientId: number;
-    serviceCategory: string;
+    // Fix: Changed 'serviceCategory' to 'service' to make this type compatible with ServiceRequest.
+    service: string;
     description: string;
     createdAt: string;
 }
 
-// AI Help Response
 export interface AiHelpResponse {
     is_diy: boolean;
     solution_steps: { step: number; description: string }[];
@@ -92,16 +86,6 @@ export interface AiHelpResponse {
     disclaimer: string;
 }
 
-// Chat
-export interface ChatMessage {
-    id: number;
-    senderId: number;
-    receiverId: number;
-    text: string;
-    timestamp: string;
-}
-
-// Dynamic Form Generation for Service Request
 export interface FormField {
     name: string;
     label: string;
@@ -117,5 +101,12 @@ export interface ServiceRequestFormData {
     dynamicFields: Record<string, string>;
 }
 
-export type ActiveModal = 'login' | 'signup' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'confirmation' | 'cta' | 'serviceRequest' | null;
-export type View = 'home' | 'professionals' | 'admin' | 'profile' | 'opportunities' | 'ai-help';
+export interface ServiceRequest extends ServiceRequestFormData {
+    id: number;
+    clientId: number;
+    professionalId: number;
+    service: string;
+    status: 'pending' | 'accepted' | 'declined' | 'completed' | 'awaiting_payment' | 'paid';
+    createdAt: string;
+    price?: number;
+}

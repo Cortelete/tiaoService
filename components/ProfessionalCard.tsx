@@ -1,5 +1,7 @@
+
 import React from 'react';
-import type { User } from '../../types';
+// Fix: Corrected the import path for types.
+import type { User } from '../types';
 import { AnimatedButton } from './AnimatedButton';
 import { StarIcon, MapPinIcon, CurrencyDollarIcon } from './icons';
 

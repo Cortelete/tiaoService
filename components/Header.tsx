@@ -1,97 +1,80 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import type { User } from '../types';
 import { AnimatedButton } from './AnimatedButton';
-import { UserCircleIcon, BriefcaseIcon, SparklesIcon } from './icons';
+import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon, BriefcaseIcon, WrenchScrewdriverIcon, SparklesIcon, WalletIcon } from './icons';
 
 interface HeaderProps {
-  onGoHome: () => void;
-  user: User | null;
-  onOpenLogin: () => void;
-  onOpenSignup: () => void;
+  currentUser: User | null;
+  onLogin: () => void;
+  onSignup: () => void;
   onLogout: () => void;
-  onNavigateToAdmin: () => void;
-  onNavigateToProfile: () => void;
-  onNavigateToOpportunities: () => void;
-  onNavigateToAiHelp: () => void;
+  onNavigate: (page: 'home' | 'profile' | 'admin' | 'opportunities' | 'aiHelp') => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user, onGoHome, onOpenLogin, onOpenSignup, onLogout, onNavigateToAdmin, onNavigateToProfile, onNavigateToOpportunities, onNavigateToAiHelp }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleLinkClick = (action: () => void) => {
-    action();
-    setIsDropdownOpen(false);
-  }
+export const Header: React.FC<HeaderProps> = ({ currentUser, onLogin, onSignup, onLogout, onNavigate }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+    <header className="bg-white shadow-md sticky top-0 z-40">
+      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div 
-          className="text-3xl md:text-4xl font-extrabold cursor-pointer"
-          onClick={onGoHome}
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => onNavigate('home')}
         >
-          <span className="animated-gradient bg-gradient-to-r from-orange-500 to-blue-600 bg-clip-text text-transparent">
-            TiãoService
-          </span>
+          <WrenchScrewdriverIcon className="h-8 w-8 text-orange-500 transform -rotate-45" />
+          <span className="text-2xl font-bold text-gray-800">Tião<span className="text-blue-600">Service</span></span>
         </div>
-        <nav className="flex items-center space-x-2 md:space-x-4">
-          {user ? (
-            <div className="flex items-center gap-2 md:gap-4">
-               <button onClick={onNavigateToAiHelp} title="IA me Ajuda" className="flex items-center gap-1.5 text-gray-600 hover:text-orange-500 transition-colors duration-300 font-medium p-2 rounded-lg hover:bg-orange-50">
-                  <SparklesIcon className="w-6 h-6 md:w-5 md:h-5 text-orange-500" />
-                  <span className="hidden md:inline">IA me Ajuda</span>
-               </button>
-              <div className="relative" ref={dropdownRef}>
-                <button onClick={() => setIsDropdownOpen(prev => !prev)} className="p-1 text-gray-500 hover:text-orange-600 rounded-full transition-colors flex items-center gap-2 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
-                   <img src={user.imageUrl || 'https://i.pravatar.cc/150?u=' + user.id} alt={user.name} className="w-9 h-9 rounded-full object-cover"/>
-                </button>
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl py-2 z-50 animate-fade-in-down">
-                     <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-800 truncate">Olá, {user.nickname || user.name.split(' ')[0]}!</p>
-                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                     </div>
-                     <div className="my-1"></div>
-                    <button onClick={() => handleLinkClick(onNavigateToProfile)} className="w-full text-left px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 font-medium transition-colors flex items-center gap-3">
-                      <UserCircleIcon className="w-5 h-5" /> Meu Perfil
+        <nav>
+          {currentUser ? (
+            <div className="relative">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => { onNavigate('profile'); setIsMenuOpen(false); }} className="hidden sm:flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-orange-500">
+                        <WalletIcon className="w-5 h-5"/>
+                        <span>TC$ {(currentUser.walletBalanceTC || 0).toFixed(2)}</span>
                     </button>
-                     {user.role === 'professional' && (
-                      <button onClick={() => handleLinkClick(onNavigateToOpportunities)} className="w-full text-left px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 font-medium transition-colors flex items-center gap-3">
+                    <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center gap-2">
+                        <img 
+                          src={currentUser.imageUrl || `https://i.pravatar.cc/150?u=${currentUser.id}`} 
+                          alt={currentUser.name} 
+                          className="w-10 h-10 rounded-full object-cover border-2 border-orange-400"
+                        />
+                         <span className="hidden md:block font-semibold text-gray-700">{currentUser.nickname || currentUser.name}</span>
+                    </button>
+                </div>
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-2 animate-fade-in-down">
+                  <a onClick={() => { onNavigate('profile'); setIsMenuOpen(false); }} className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer">
+                    <UserCircleIcon className="w-5 h-5" /> Meu Perfil
+                  </a>
+                  <a onClick={() => { onNavigate('profile'); setIsMenuOpen(false); }} className="flex sm:hidden items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer">
+                    <WalletIcon className="w-5 h-5" /> Carteira (TC$ {(currentUser.walletBalanceTC || 0).toFixed(2)})
+                  </a>
+                   <a onClick={() => { onNavigate('aiHelp'); setIsMenuOpen(false); }} className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer">
+                    <SparklesIcon className="w-5 h-5" /> Ajuda com IA
+                  </a>
+                  {currentUser.role === 'professional' && (
+                     <a onClick={() => { onNavigate('opportunities'); setIsMenuOpen(false); }} className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer">
                         <BriefcaseIcon className="w-5 h-5" /> Oportunidades
-                      </button>
-                     )}
-                    {user.role === 'admin' && (
-                       <button onClick={() => handleLinkClick(onNavigateToAdmin)} className="w-full text-left px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 font-medium transition-colors">
-                          Painel Admin
-                       </button>
-                    )}
-                    <div className="my-2 border-t border-gray-100"></div>
-                    <button onClick={() => handleLinkClick(onLogout)} className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 font-medium transition-colors">
-                      Sair
-                    </button>
-                  </div>
-                )}
-              </div>
+                    </a>
+                  )}
+                  {currentUser.role === 'admin' && (
+                    <a onClick={() => { onNavigate('admin'); setIsMenuOpen(false); }} className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer">
+                      <Cog6ToothIcon className="w-5 h-5" /> Painel Admin
+                    </a>
+                  )}
+                  <div className="border-t my-2"></div>
+                  <a onClick={() => { onLogout(); setIsMenuOpen(false); }} className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 cursor-pointer">
+                    <ArrowRightOnRectangleIcon className="w-5 h-5" /> Sair
+                  </a>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="flex items-center space-x-2 md:space-x-4">
-              <button onClick={onOpenLogin} className="text-gray-600 hover:text-orange-500 transition-colors duration-300 font-medium px-4 py-2">
+            <div className="flex items-center gap-2 md:gap-4">
+              <button onClick={onLogin} className="font-bold text-gray-600 hover:text-orange-500 transition-colors">
                 Entrar
               </button>
-              <AnimatedButton onClick={onOpenSignup}>
+              <AnimatedButton onClick={onSignup}>
                 Cadastre-se
               </AnimatedButton>
             </div>

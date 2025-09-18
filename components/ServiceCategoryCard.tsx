@@ -1,6 +1,7 @@
 
 import React from 'react';
-import type { ServiceCategory } from '../../types';
+// Fix: Corrected the import path for types.
+import type { ServiceCategory } from '../types';
 
 interface ServiceCategoryCardProps {
   category: ServiceCategory;

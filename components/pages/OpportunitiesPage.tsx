@@ -18,7 +18,8 @@ export const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ currentUse
 
   const relevantJobPosts = useMemo(() => {
     if (!currentUser.services) return [];
-    return jobPosts.filter(post => currentUser.services?.includes(post.serviceCategory));
+    // Fix: Changed 'post.serviceCategory' to 'post.service' to align with the updated JobPost type.
+    return jobPosts.filter(post => currentUser.services?.includes(post.service));
   }, [jobPosts, currentUser.services]);
 
   return (

@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
+// Fix: Corrected import paths for types and constants.
 import type { User } from '../types';
-import { AnimatedButton } from './AnimatedButton';
 import { serviceCategories } from '../constants';
+import { AnimatedButton } from './AnimatedButton';
 
 interface UserProfileFormProps {
   user: User;

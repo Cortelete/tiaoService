@@ -1,4 +1,6 @@
+
 import React from 'react';
+// Fix: Corrected the import path for types.
 import type { JobPost, User } from '../types';
 import { MapPinIcon } from './icons';
 import { AnimatedButton } from './AnimatedButton';
