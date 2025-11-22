@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export type UserRole = 'client' | 'professional' | 'admin';
@@ -42,6 +43,10 @@ export interface User {
   regionId: number;
   isProfileComplete: boolean;
   status?: UserStatus;
+  
+  // Geolocation
+  latitude?: number;
+  longitude?: number;
   
   // Professional-specific fields
   services?: string[];

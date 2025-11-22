@@ -48,6 +48,9 @@ export const App: React.FC = () => {
   // New state for payment flow
   const [serviceToPay, setServiceToPay] = useState<ServiceRequest | null>(null);
   
+  // New state for AI search from home
+  const [initialAiQuery, setInitialAiQuery] = useState('');
+  
   const handleLogin = (credentials: UserCredentials): { success: boolean, message?: string } => {
     const user = users.find(u => u.email === credentials.email && u.password === credentials.password);
     if (user) {
@@ -70,6 +73,7 @@ export const App: React.FC = () => {
   const handleLogout = () => {
     setCurrentUser(null);
     setCurrentPage('home');
+    setInitialAiQuery('');
   };
 
   const handleSignup = (newUser: Omit<User, 'id' | 'isProfileComplete' | 'regionId' | 'transactions'>): boolean => {
@@ -113,6 +117,11 @@ export const App: React.FC = () => {
       if (selectedProfessional) {
           setActiveModal('chat');
       }
+  };
+  
+  const handleHomeAiSearch = (query: string) => {
+      setInitialAiQuery(query);
+      setCurrentPage('aiHelp');
   };
 
   const handleSendMessage = async (text: string) => {
@@ -205,6 +214,7 @@ export const App: React.FC = () => {
           "disclaimer": "string"
         }
         Seja conciso. A categoria deve ser uma das seguintes: ${serviceCategories.map(c => c.name).join(', ')}.
+        IMPORTANTE: O campo "disclaimer" deve conter avisos de segurança importantes relacionados ao problema descrito (ex: risco de choque elétrico, usar EPIs, desligar a chave geral, etc.). Se não houver risco evidente, forneça um aviso genérico sobre segurança.
       `;
 
       const response = await ai.models.generateContent({
@@ -399,10 +409,16 @@ export const App: React.FC = () => {
                   professionals={professionals} 
                   onViewProfessional={handleViewProfessional} 
                   onBack={() => setCurrentPage('home')}
+                  initialQuery={initialAiQuery}
                 />;
       case 'home':
       default:
-        return <HomePage onSelectCategory={handleSelectCategory} categories={serviceCategories} />;
+        return <HomePage 
+                  onSelectCategory={handleSelectCategory} 
+                  categories={serviceCategories}
+                  currentUser={currentUser}
+                  onAiSearch={handleHomeAiSearch}
+               />;
     }
   };
 

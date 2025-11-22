@@ -1,18 +1,43 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { User, AiHelpResponse } from '../../types';
 import { AnimatedButton } from '../AnimatedButton';
-import { SparklesIcon, ShieldCheckIcon } from '../icons';
+import { SparklesIcon, ShieldCheckIcon, MapPinIcon, BriefcaseIcon } from '../icons';
 import { ProfessionalCard } from '../ProfessionalCard';
-// Fix: Import BackButton to enable back navigation.
 import { BackButton } from '../BackButton';
 
 interface AiHelpPageProps {
   onAiHelpRequest: (problemDescription: string) => Promise<AiHelpResponse>;
   professionals: User[];
   onViewProfessional: (professional: User) => void;
-  // Fix: Add onBack prop to handle navigation.
   onBack: () => void;
+  initialQuery?: string;
+}
+
+// Helper function to calculate distance (duplicated from FindProfessionalsPage for isolation)
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(lat2 - lat1);
+  var dLon = deg2rad(lon2 - lon1);
+  var a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    ;
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg: number) {
+  return deg * (Math.PI / 180)
+}
+
+// Helper to extract numeric price from description string
+function extractPrice(description?: string): number {
+    if (!description) return 99999;
+    const match = description.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 99999;
 }
 
 const LoadingSpinner = () => (
@@ -25,24 +50,109 @@ const LoadingSpinner = () => (
     </div>
 );
 
-// Fix: Destructure onBack prop to use it.
-export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, professionals, onViewProfessional, onBack }) => {
+export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, professionals, onViewProfessional, onBack, initialQuery }) => {
   const [problem, setProblem] = useState('');
   const [aiResponse, setAiResponse] = useState<AiHelpResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
-  const recommendedProfessional = useMemo(() => {
-    if (!aiResponse?.recommend_professional || !aiResponse.recommended_category) {
-      return null;
+  useEffect(() => {
+    if (initialQuery) {
+        setProblem(initialQuery);
     }
-    const categoryProfessionals = professionals
-      // Fix: Property 'service' does not exist on type 'User'. Changed to 'services' and used .includes() to check if the category is in the array.
-      .filter(p => p.services?.includes(aiResponse.recommended_category!))
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  }, [initialQuery]);
+
+  // Request location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => console.log("Geo permission denied or error", error)
+      );
+    }
+  }, []);
+
+
+  const recommendedProfessionals = useMemo(() => {
+    if (!aiResponse?.recommend_professional || !aiResponse.recommended_category) {
+      return [];
+    }
+
+    const targetCategory = aiResponse.recommended_category;
+
+    // 1. STRICT FILTER: Only consider professionals who perform the specific service.
+    // This ensures relevance is the primary factor.
+    let relevantProfessionals = professionals
+      .filter(p => p.services?.includes(targetCategory));
+
+    // Calculate distances for the relevant subset
+    const professionalsWithDistance = relevantProfessionals.map(p => {
+         if (userLocation && p.latitude && p.longitude) {
+            return { ...p, distance: getDistanceFromLatLonInKm(userLocation.lat, userLocation.lng, p.latitude, p.longitude) };
+         }
+         return p;
+    });
+
+    if (professionalsWithDistance.length === 0) return [];
+
+    // Strategy: Pick 3 distinct professionals FROM THE RELEVANT SUBSET
+    // 1. Best Rated
+    // 2. Best Price (lowest number in string)
+    // 3. Nearest (if location available)
+
+    const results: { type: string, color: string, data: any }[] = [];
+    const usedIds = new Set<number>();
+
+    // 1. Best Rated (Strictly relevant)
+    const sortedByRating = [...professionalsWithDistance].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    const bestRated = sortedByRating[0];
+    if (bestRated) {
+        results.push({ type: '🏆 Melhor Avaliação', color: 'bg-yellow-500', data: bestRated });
+        usedIds.add(bestRated.id);
+    }
+
+    // 2. Best Price (Strictly relevant, exclude already selected)
+    const sortedByPrice = [...professionalsWithDistance]
+        .filter(p => !usedIds.has(p.id))
+        .sort((a, b) => extractPrice(a.pricing?.description) - extractPrice(b.pricing?.description));
     
-    return categoryProfessionals.length > 0 ? categoryProfessionals[0] : null;
-  }, [aiResponse, professionals]);
+    const bestPrice = sortedByPrice[0];
+    if (bestPrice) {
+         results.push({ type: '💰 Melhor Preço', color: 'bg-green-600', data: bestPrice });
+         usedIds.add(bestPrice.id);
+    }
+
+    // 3. Nearest (Strictly relevant, exclude already selected) - Only if we have location
+    if (userLocation) {
+        const sortedByDist = [...professionalsWithDistance]
+             .filter(p => !usedIds.has(p.id) && (p as any).distance !== undefined)
+             .sort((a: any, b: any) => a.distance - b.distance);
+        
+        const nearest = sortedByDist[0];
+        if (nearest) {
+            results.push({ type: '📍 Mais Perto', color: 'bg-blue-500', data: nearest });
+            usedIds.add(nearest.id);
+        }
+    } else {
+        // Fallback: If no location, or "Nearest" was already picked by Best Rated/Price, 
+        // pick the next best rated relevant pro.
+        const nextBest = sortedByRating.find(p => !usedIds.has(p.id));
+        if (nextBest) {
+             results.push({ type: '🌟 Recomendado', color: 'bg-orange-500', data: nextBest });
+             usedIds.add(nextBest.id);
+        }
+    }
+
+    return results;
+
+  }, [aiResponse, professionals, userLocation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,8 +174,7 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Fix: Add BackButton for navigation. */}
+    <div className="max-w-5xl mx-auto">
       <BackButton onClick={onBack} />
       <div className="text-center">
         <div className="flex justify-center items-center gap-3">
@@ -77,6 +186,12 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
         <p className="mt-4 text-lg text-gray-600">
           Descreva seu problema e nossa inteligência artificial irá te ajudar a encontrar uma solução ou o profissional certo para o trabalho.
         </p>
+         {!userLocation && (
+            <p className="mt-2 text-sm text-orange-600 flex justify-center items-center gap-1">
+                <MapPinIcon className="w-4 h-4"/>
+                Ative a localização do navegador para ver profissionais próximos!
+            </p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="mt-10 bg-white p-6 rounded-2xl shadow-lg">
@@ -97,51 +212,69 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
         </div>
       </form>
 
-      <div className="mt-10">
+      <div className="mt-10 pb-10">
         {isLoading && <LoadingSpinner />}
         {error && <p className="text-center text-red-600 bg-red-100 p-4 rounded-lg">{error}</p>}
         {aiResponse && (
           <div className="bg-white p-6 rounded-2xl shadow-lg animate-fade-in-up">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Análise da IA do Tião</h2>
             
+            {/* Safety Disclaimer */}
+            {aiResponse.disclaimer && (
+                <div className="mb-6 p-4 bg-gray-100 border-l-4 border-gray-400 text-gray-600 rounded-r-lg flex items-start gap-3">
+                    <ShieldCheckIcon className="w-8 h-8 flex-shrink-0 text-gray-500"/>
+                    <div>
+                        <h4 className="font-bold">Aviso de Segurança</h4>
+                        <p className="text-sm">{aiResponse.disclaimer}</p>
+                    </div>
+                </div>
+            )}
+            
             {aiResponse.is_diy && aiResponse.solution_steps && (
-              <div>
+              <div className="mb-8">
                 <h3 className="text-xl font-semibold text-green-700">Solução "Faça Você Mesmo":</h3>
-                <ol className="mt-3 list-decimal list-inside space-y-2 text-gray-700">
+                <ol className="mt-3 list-decimal list-inside space-y-2 text-gray-700 bg-green-50 p-4 rounded-lg">
                   {aiResponse.solution_steps.map(step => <li key={step.step}><strong>Passo {step.step}:</strong> {step.description}</li>)}
                 </ol>
               </div>
             )}
 
             {aiResponse.recommend_professional && (
-                <div className="mt-6">
-                    <h3 className="text-xl font-semibold text-orange-700">Recomendação de Profissional:</h3>
-                    <p className="mt-2 text-gray-700">{aiResponse.professional_reasoning}</p>
-                    {recommendedProfessional ? (
-                        <div className="mt-6">
-                             <div className="flex items-center gap-2 mb-4">
-                                <SparklesIcon className="w-6 h-6 text-orange-500" />
-                                <h4 className="text-lg font-bold">A IA Recomenda:</h4>
+                <div className="mt-6 border-t pt-6">
+                    <h3 className="text-xl font-semibold text-orange-700 mb-2">Recomendação de Profissional:</h3>
+                    <p className="mb-6 text-gray-700 italic">"{aiResponse.professional_reasoning}"</p>
+                    
+                    {recommendedProfessionals.length > 0 ? (
+                        <div>
+                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+                                <div className="flex items-center gap-2">
+                                    <SparklesIcon className="w-6 h-6 text-orange-500" />
+                                    <h4 className="text-lg font-bold text-gray-800">Melhores opções para você:</h4>
+                                </div>
+                                <span className="hidden sm:block text-gray-400">|</span>
+                                <div className="flex items-center gap-1 text-sm text-gray-600 font-medium">
+                                    <BriefcaseIcon className="w-4 h-4" />
+                                    Categoria: <span className="text-orange-600">{aiResponse.recommended_category}</span>
+                                </div>
                             </div>
-                            <div className="max-w-sm mx-auto">
-                                <ProfessionalCard professional={recommendedProfessional} onViewDetails={() => onViewProfessional(recommendedProfessional)} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {recommendedProfessionals.map((item, idx) => (
+                                    <ProfessionalCard 
+                                        key={item.data.id} 
+                                        professional={item.data} 
+                                        distance={(item.data as any).distance}
+                                        highlightBadge={item.type}
+                                        highlightColor={item.color}
+                                        onViewDetails={() => onViewProfessional(item.data)} 
+                                    />
+                                ))}
                             </div>
                         </div>
                     ) : (
                         <p className="mt-4 text-center bg-yellow-50 p-4 rounded-lg text-yellow-800">
-                            Não encontramos um profissional de "{aiResponse.recommended_category}" com nota alta no momento, mas você pode procurar na nossa lista!
+                            A IA recomendou um profissional de <strong>{aiResponse.recommended_category}</strong>, mas não encontramos ninguém com esse perfil exato disponível na sua região ou lista de testes no momento.
                         </p>
                     )}
-                </div>
-            )}
-            
-            {aiResponse.disclaimer && (
-                <div className="mt-8 p-4 bg-gray-100 border-l-4 border-gray-400 text-gray-600 rounded-r-lg flex items-start gap-3">
-                    <ShieldCheckIcon className="w-8 h-8 flex-shrink-0 text-gray-500"/>
-                    <div>
-                        <h4 className="font-bold">Aviso de Segurança</h4>
-                        <p className="text-sm">{aiResponse.disclaimer}</p>
-                    </div>
                 </div>
             )}
           </div>
