@@ -5,7 +5,7 @@ export type UserRole = 'client' | 'professional' | 'admin';
 export type UserStatus = 'pending' | 'approved' | 'blocked';
 export type ServicePeriod = 'Manhã' | 'Tarde' | 'Noite';
 export type TransactionType = 'deposit' | 'withdrawal' | 'payment_sent' | 'payment_received' | 'bonus';
-export type ActiveModal = 'login' | 'signup' | 'professional' | 'chat' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'serviceRequest' | 'confirmation' | 'cta' | 'addFunds' | 'withdraw' | 'servicePayment';
+export type ActiveModal = 'login' | 'signup' | 'professional' | 'chat' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'serviceRequest' | 'confirmation' | 'cta' | 'addFunds' | 'withdraw' | 'servicePayment' | 'emergencyChat';
 
 
 export interface ServiceCategory {
@@ -68,9 +68,10 @@ export interface UserCredentials {
 }
 
 export interface ChatMessage {
-  senderId: number;
+  senderId: number; // 0 usually denotes AI in specific contexts, or user ID
   text: string;
   timestamp: string;
+  isAi?: boolean; // Helper for UI
 }
 
 export interface JobPost {
@@ -83,10 +84,11 @@ export interface JobPost {
 }
 
 export interface AiHelpResponse {
+    is_emergency: boolean;
     is_diy: boolean;
     solution_steps: { step: number; description: string }[];
     recommend_professional: boolean;
-    recommended_category: string | null;
+    recommended_categories: string[]; // Changed from single string to array
     professional_reasoning: string;
     disclaimer: string;
 }

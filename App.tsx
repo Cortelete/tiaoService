@@ -25,6 +25,7 @@ import { CtaModal } from './components/modals/CtaModal';
 import { AddFundsModal } from './components/modals/AddFundsModal';
 import { WithdrawModal } from './components/modals/WithdrawModal';
 import { ServicePaymentModal } from './components/modals/ServicePaymentModal';
+import { EmergencyChatModal } from './components/modals/EmergencyChatModal';
 
 
 type Page = 'home' | 'findProfessionals' | 'profile' | 'admin' | 'opportunities' | 'aiHelp';
@@ -44,6 +45,10 @@ export const App: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<Record<string, ChatMessage[]>>({});
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>(mockServiceRequests);
+
+  // Emergency Chat State
+  const [emergencyMessages, setEmergencyMessages] = useState<ChatMessage[]>([]);
+  const [isSendingEmergency, setIsSendingEmergency] = useState(false);
 
   // New state for payment flow
   const [serviceToPay, setServiceToPay] = useState<ServiceRequest | null>(null);
@@ -163,6 +168,50 @@ export const App: React.FC = () => {
         setIsSendingMessage(false);
       }
   };
+
+  const handleSendEmergencyMessage = async (text: string) => {
+      const userMsg: ChatMessage = { senderId: currentUser?.id || 0, text, timestamp: new Date().toISOString(), isAi: false };
+      setEmergencyMessages(prev => [...prev, userMsg]);
+      setIsSendingEmergency(true);
+
+      try {
+          const prompt = `
+            Você é a Mia, assistente de IA do TiãoService. O usuário está em uma potencial emergência.
+            O usuário disse: "${text}"
+            
+            CONTEXTO DO SISTEMA DE EMERGÊNCIA (BRASIL/PARANÁ):
+            - 192 (SAMU): CLÍNICO (infarto, AVC, convulsão, desmaio, intoxicação).
+            - 193 (SIATE/BOMBEIROS): TRAUMA (acidentes, quedas, fraturas, cortes, sangue), FOGO, CHOQUE.
+            - 190 (POLÍCIA): CRIME, VIOLÊNCIA, AMEAÇA.
+
+            SEU OBJETIVO AGORA:
+            1. **Acalmar e Humanizar**: Inicie com um tom calmo, seguro e empático. Ex: "Entendi, respire fundo, estou aqui." ou "Fique tranquilo, vamos resolver."
+            2. **Analisar e Direcionar**: Com base no que o usuário disse, identifique QUAL serviço específico ele deve chamar.
+               - Se ele disse "meu pai caiu", é trauma -> Indique 193.
+               - Se ele disse "dor no peito", é clínico -> Indique 192.
+               - Se não estiver claro, faça uma pergunta simples e direta para decidir.
+            3. **Sem lista telefônica**: NÃO liste todos os números (190, 192, 193) a menos que você realmente não saiba o que está havendo. Seja assertiva no número correto.
+            4. **Instrução Rápida**: Dê uma dica de segurança curta (ex: "Não mova a vítima", "Saia do local").
+
+            Mantenha a resposta curta, humana e direta.
+          `;
+
+          const response = await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: prompt,
+          });
+          
+          const aiMsg: ChatMessage = { senderId: -1, text: response.text, timestamp: new Date().toISOString(), isAi: true };
+          setEmergencyMessages(prev => [...prev, aiMsg]);
+
+      } catch (error) {
+          console.error("Error in emergency chat", error);
+          const errorMsg: ChatMessage = { senderId: -1, text: "Erro de conexão. Em caso de dúvida, ligue 193 (Bombeiros) ou 192 (SAMU).", timestamp: new Date().toISOString(), isAi: true };
+          setEmergencyMessages(prev => [...prev, errorMsg]);
+      } finally {
+          setIsSendingEmergency(false);
+      }
+  };
   
   const handleUpdateUser = (updatedUser: User) => {
       const newUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u)
@@ -202,19 +251,35 @@ export const App: React.FC = () => {
   };
   
   const handleAiHelpRequest = async (problemDescription: string): Promise<AiHelpResponse> => {
+      const availableCategories = serviceCategories.map(c => c.name).join(', ');
+      
       const prompt = `
         Um usuário da plataforma "TiãoService" descreveu o seguinte problema: "${problemDescription}".
+        
         Analise o problema e retorne um JSON com a seguinte estrutura:
         {
+          "is_emergency": boolean,
           "is_diy": boolean,
           "solution_steps": [{ "step": number, "description": "string" }],
           "recommend_professional": boolean,
-          "recommended_category": "string",
+          "recommended_categories": ["string"],
           "professional_reasoning": "string",
           "disclaimer": "string"
         }
-        Seja conciso. A categoria deve ser uma das seguintes: ${serviceCategories.map(c => c.name).join(', ')}.
-        IMPORTANTE: O campo "disclaimer" deve conter avisos de segurança importantes relacionados ao problema descrito (ex: risco de choque elétrico, usar EPIs, desligar a chave geral, etc.). Se não houver risco evidente, forneça um aviso genérico sobre segurança.
+
+        REGRAS CRÍTICAS DE EMERGÊNCIA (Contexto Brasil/Paraná):
+        1. **Defina "is_emergency": true** SE houver risco à vida, incêndio, crime, cheiro de gás, choque grave, trauma ou mal súbito.
+        2. **No campo "disclaimer"**, se for emergência, você DEVE indicar QUAL número chamar primeiro com base no tipo:
+           - **SAMU (192)**: Casos CLÍNICOS.
+           - **SIATE / BOMBEIROS (193)**: Casos de TRAUMA ou FOGO.
+           - **POLÍCIA MILITAR (190)**: Crime/Perigo.
+        
+        OUTRAS REGRAS:
+        3. **Recomendação Profissional**: Defina "recommend_professional": true SEMPRE.
+        4. **Categorias**: Em "recommended_categories", liste TODAS as profissões adequadas.
+        5. **Reasoning**: Explique por que.
+
+        Seja conciso.
       `;
 
       const response = await ai.models.generateContent({
@@ -225,6 +290,7 @@ export const App: React.FC = () => {
           responseSchema: {
             type: Type.OBJECT,
             properties: {
+              is_emergency: { type: Type.BOOLEAN },
               is_diy: { type: Type.BOOLEAN },
               solution_steps: {
                 type: Type.ARRAY,
@@ -234,7 +300,11 @@ export const App: React.FC = () => {
                 }
               },
               recommend_professional: { type: Type.BOOLEAN },
-              recommended_category: { type: Type.STRING },
+              recommended_categories: { 
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                  description: "Lista das categorias de profissionais recomendadas para o serviço."
+              },
               professional_reasoning: { type: Type.STRING },
               disclaimer: { type: Type.STRING }
             }
@@ -244,6 +314,59 @@ export const App: React.FC = () => {
       
       const jsonText = response.text.trim();
       return JSON.parse(jsonText);
+  };
+
+  const handleEmergencyDetected = async (initialText: string) => {
+      // Set initial user message and open modal
+      const userMsg: ChatMessage = { 
+          senderId: currentUser?.id || 0, 
+          text: initialText, 
+          timestamp: new Date().toISOString(), 
+          isAi: false 
+      };
+      setEmergencyMessages([userMsg]);
+      setActiveModal('emergencyChat');
+      setIsSendingEmergency(true);
+
+      try {
+          const prompt = `
+            Você é a Mia, IA de emergência do TiãoService. 
+            O usuário acabou de relatar esta emergência: "${initialText}".
+            
+            Gere a PRIMEIRA resposta para o chat:
+            1. **Acolha**: "Estou aqui com você. Respire fundo."
+            2. **Oriente IMEDIATAMENTE**: Se for trauma/fogo, mande ligar 193. Se for clínico, 192. Se for crime, 190. Se não souber, pergunte.
+            3. **Instrução de Segurança**: Ex: "Não desligue", "Saia de perto", "Não mova a pessoa".
+            
+            Seja curto, humano e tranquilizador. Não faça listas longas agora.
+          `;
+
+          const response = await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: prompt,
+          });
+          
+          const aiMsg: ChatMessage = { 
+              senderId: -1, 
+              text: response.text, 
+              timestamp: new Date().toISOString(), 
+              isAi: true 
+          };
+          
+          setEmergencyMessages(prev => [...prev, aiMsg]);
+
+      } catch (error) {
+          console.error("Error generating initial emergency response", error);
+          const fallbackMsg: ChatMessage = { 
+              senderId: -1, 
+              text: "Estou aqui. Mantenha a calma. Por favor, se houver risco imediato, ligue para o 193 (Bombeiros) ou 192 (SAMU). Me dê mais detalhes para eu ajudar.", 
+              timestamp: new Date().toISOString(), 
+              isAi: true 
+          };
+          setEmergencyMessages(prev => [...prev, fallbackMsg]);
+      } finally {
+          setIsSendingEmergency(false);
+      }
   };
   
   const handleOpenServiceRequestModal = (service: string) => {
@@ -410,6 +533,7 @@ export const App: React.FC = () => {
                   onViewProfessional={handleViewProfessional} 
                   onBack={() => setCurrentPage('home')}
                   initialQuery={initialAiQuery}
+                  onEmergencyDetected={handleEmergencyDetected}
                 />;
       case 'home':
       default:
@@ -469,6 +593,14 @@ export const App: React.FC = () => {
               onClose={() => setActiveModal(null)}
               onSendMessage={handleSendMessage}
               isSending={isSendingMessage}
+          />
+      )}
+      {activeModal === 'emergencyChat' && (
+          <EmergencyChatModal 
+            messages={emergencyMessages}
+            onClose={() => setActiveModal(null)}
+            onSendMessage={handleSendEmergencyMessage}
+            isSending={isSendingEmergency}
           />
       )}
       {activeModal === 'pendingApproval' && <PendingApprovalModal onClose={() => setActiveModal(null)} />}

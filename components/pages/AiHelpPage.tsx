@@ -5,6 +5,7 @@ import { AnimatedButton } from '../AnimatedButton';
 import { SparklesIcon, ShieldCheckIcon, MapPinIcon, BriefcaseIcon } from '../icons';
 import { ProfessionalCard } from '../ProfessionalCard';
 import { BackButton } from '../BackButton';
+import { VoiceInput } from '../VoiceInput';
 
 interface AiHelpPageProps {
   onAiHelpRequest: (problemDescription: string) => Promise<AiHelpResponse>;
@@ -12,6 +13,7 @@ interface AiHelpPageProps {
   onViewProfessional: (professional: User) => void;
   onBack: () => void;
   initialQuery?: string;
+  onEmergencyDetected: (initialText: string) => void;
 }
 
 // Helper function to calculate distance (duplicated from FindProfessionalsPage for isolation)
@@ -50,7 +52,7 @@ const LoadingSpinner = () => (
     </div>
 );
 
-export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, professionals, onViewProfessional, onBack, initialQuery }) => {
+export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, professionals, onViewProfessional, onBack, initialQuery, onEmergencyDetected }) => {
   const [problem, setProblem] = useState('');
   const [aiResponse, setAiResponse] = useState<AiHelpResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,16 +83,16 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
 
 
   const recommendedProfessionals = useMemo(() => {
-    if (!aiResponse?.recommend_professional || !aiResponse.recommended_category) {
+    if (!aiResponse?.recommend_professional || !aiResponse.recommended_categories || aiResponse.recommended_categories.length === 0) {
       return [];
     }
 
-    const targetCategory = aiResponse.recommended_category;
+    const targetCategories = aiResponse.recommended_categories;
 
-    // 1. STRICT FILTER: Only consider professionals who perform the specific service.
-    // This ensures relevance is the primary factor.
-    let relevantProfessionals = professionals
-      .filter(p => p.services?.includes(targetCategory));
+    // 1. STRICT FILTER: Only consider professionals who perform ANY of the recommended services.
+    let relevantProfessionals = professionals.filter(p => 
+        p.services?.some(service => targetCategories.includes(service))
+    );
 
     // Calculate distances for the relevant subset
     const professionalsWithDistance = relevantProfessionals.map(p => {
@@ -165,6 +167,9 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
     try {
       const response = await onAiHelpRequest(problem);
       setAiResponse(response);
+      if (response.is_emergency) {
+          onEmergencyDetected(problem);
+      }
     } catch (err) {
       console.error(err);
       setError('Ocorreu um erro ao consultar a IA. Por favor, tente novamente.');
@@ -194,17 +199,23 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-10 bg-white p-6 rounded-2xl shadow-lg">
+      <form onSubmit={handleSubmit} className="mt-10 bg-white p-6 rounded-2xl shadow-lg relative">
         <label htmlFor="problem-description" className="text-lg font-bold text-gray-700 block mb-2">Qual é o seu problema?</label>
-        <textarea
-          id="problem-description"
-          rows={5}
-          value={problem}
-          onChange={(e) => setProblem(e.target.value)}
-          className="w-full p-4 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
-          placeholder="Ex: Minha pia da cozinha está entupida e a água não desce de jeito nenhum."
-          disabled={isLoading}
-        />
+        <div className="relative">
+            <textarea
+            id="problem-description"
+            rows={5}
+            value={problem}
+            onChange={(e) => setProblem(e.target.value)}
+            className="w-full p-4 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 transition pb-12"
+            placeholder="Ex: Minha pia da cozinha está entupida e a água não desce de jeito nenhum."
+            disabled={isLoading}
+            />
+            <div className="absolute bottom-3 left-3">
+                <VoiceInput onTranscript={(text) => setProblem(prev => prev + (prev ? ' ' : '') + text)} disabled={isLoading}/>
+            </div>
+        </div>
+
         <div className="mt-4 text-right">
           <AnimatedButton onClick={() => {}} className="!px-8 !py-3 text-lg" disabled={isLoading}>
             {isLoading ? 'Analisando...' : 'Obter Ajuda'}
@@ -216,15 +227,33 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
         {isLoading && <LoadingSpinner />}
         {error && <p className="text-center text-red-600 bg-red-100 p-4 rounded-lg">{error}</p>}
         {aiResponse && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg animate-fade-in-up">
+          <div className={`bg-white p-6 rounded-2xl shadow-lg animate-fade-in-up ${aiResponse.is_emergency ? 'border-4 border-red-500' : ''}`}>
+            
+            {/* Emergency Banner */}
+             {aiResponse.is_emergency && (
+                 <div className="mb-6 bg-red-600 text-white p-4 rounded-lg shadow-md">
+                     <div className="flex items-center gap-3 mb-2">
+                         <ShieldCheckIcon className="w-8 h-8" />
+                         <h3 className="text-2xl font-bold">Atenção: Possível Emergência</h3>
+                     </div>
+                     <p className="font-semibold mb-4">Situações de risco exigem profissionais de emergência. Use os números abaixo conforme necessário:</p>
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                         <a href="tel:193" className="bg-white text-red-700 font-bold py-2 px-4 rounded hover:bg-gray-100 block">193 Bombeiros<br/><span className="text-xs font-normal text-gray-500">Incêndio/Resgate</span></a>
+                         <a href="tel:192" className="bg-white text-red-700 font-bold py-2 px-4 rounded hover:bg-gray-100 block">192 SAMU<br/><span className="text-xs font-normal text-gray-500">Ambulância</span></a>
+                         <a href="tel:190" className="bg-white text-red-700 font-bold py-2 px-4 rounded hover:bg-gray-100 block">190 Polícia (PM)<br/><span className="text-xs font-normal text-gray-500">Crime/Risco</span></a>
+                         <a href="tel:197" className="bg-white text-red-700 font-bold py-2 px-4 rounded hover:bg-gray-100 block">197 Civil<br/><span className="text-xs font-normal text-gray-500">Denúncias</span></a>
+                     </div>
+                 </div>
+             )}
+
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Análise da IA do Tião</h2>
             
-            {/* Safety Disclaimer */}
+            {/* Disclaimer */}
             {aiResponse.disclaimer && (
-                <div className="mb-6 p-4 bg-gray-100 border-l-4 border-gray-400 text-gray-600 rounded-r-lg flex items-start gap-3">
-                    <ShieldCheckIcon className="w-8 h-8 flex-shrink-0 text-gray-500"/>
+                <div className={`mb-6 p-4 border-l-4 rounded-r-lg flex items-start gap-3 ${aiResponse.is_emergency ? 'bg-red-50 border-red-600 text-red-800' : 'bg-gray-100 border-gray-400 text-gray-600'}`}>
+                    <ShieldCheckIcon className={`w-8 h-8 flex-shrink-0 ${aiResponse.is_emergency ? 'text-red-600' : 'text-gray-500'}`}/>
                     <div>
-                        <h4 className="font-bold">Aviso de Segurança</h4>
+                        <h4 className="font-bold">Aviso Importante</h4>
                         <p className="text-sm">{aiResponse.disclaimer}</p>
                     </div>
                 </div>
@@ -254,7 +283,7 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
                                 <span className="hidden sm:block text-gray-400">|</span>
                                 <div className="flex items-center gap-1 text-sm text-gray-600 font-medium">
                                     <BriefcaseIcon className="w-4 h-4" />
-                                    Categoria: <span className="text-orange-600">{aiResponse.recommended_category}</span>
+                                    Categorias: <span className="text-orange-600">{aiResponse.recommended_categories.join(', ')}</span>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -272,7 +301,7 @@ export const AiHelpPage: React.FC<AiHelpPageProps> = ({ onAiHelpRequest, profess
                         </div>
                     ) : (
                         <p className="mt-4 text-center bg-yellow-50 p-4 rounded-lg text-yellow-800">
-                            A IA recomendou um profissional de <strong>{aiResponse.recommended_category}</strong>, mas não encontramos ninguém com esse perfil exato disponível na sua região ou lista de testes no momento.
+                            A IA recomendou profissionais de <strong>{aiResponse.recommended_categories.join(' ou ')}</strong>, mas não encontramos ninguém com esse perfil exato disponível na sua região ou lista de testes no momento.
                         </p>
                     )}
                 </div>

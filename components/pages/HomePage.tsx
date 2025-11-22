@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import type { User, ServiceCategory } from '../../types';
 import { ServiceCategoryCard } from '../ServiceCategoryCard';
 import { SparklesIcon } from '../icons';
+import { VoiceInput } from '../VoiceInput';
 
 interface HomePageProps {
   onSelectCategory: (category: string) => void;
@@ -19,6 +20,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
     if (searchQuery.trim()) {
         onAiSearch(searchQuery);
     }
+  };
+
+  const handleVoiceTranscript = (text: string) => {
+      setSearchQuery(text);
+      // Optional: auto-submit on voice result? Let's keep it manual for user confirmation
   };
 
   return (
@@ -38,7 +44,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
         <div className="mt-10 max-w-3xl mx-auto px-4 animate-fade-in-up">
             <form onSubmit={handleSearchSubmit} className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-blue-500 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-                <div className="relative flex items-center bg-white rounded-full shadow-xl border border-gray-100 p-1 md:p-2">
+                <div className="relative flex items-center bg-white rounded-full shadow-xl border border-gray-100 p-1 md:p-2 gap-2">
                     <div className="pl-3 md:pl-4 text-orange-500">
                         <SparklesIcon className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
@@ -49,6 +55,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
                         placeholder="Ex: Minha pia está vazando..." 
                         className="flex-grow p-2 md:p-3 bg-transparent text-gray-700 placeholder-gray-400 focus:outline-none text-base md:text-lg min-w-0"
                     />
+                    
+                    <VoiceInput onTranscript={handleVoiceTranscript} className="mr-1"/>
+
                     <button 
                         type="submit"
                         className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded-full transition-all duration-300 shadow-md hover:shadow-lg transform active:scale-95 whitespace-nowrap text-sm md:text-base flex items-center gap-1"
