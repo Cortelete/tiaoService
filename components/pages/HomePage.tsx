@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import type { User, ServiceCategory, FeatureContent } from '../../types';
 import { ServiceCategoryCard } from '../ServiceCategoryCard';
-import { SparklesIcon, ShieldCheckIcon, BoltIcon, StarIcon, ChevronRightIcon } from '../icons';
+import { SparklesIcon, ShieldCheckIcon, BoltIcon, StarIcon, ChevronRightIcon, WalletIcon } from '../icons';
 import { VoiceInput } from '../VoiceInput';
 
 interface HomePageProps {
@@ -99,7 +98,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
   }
 
   // -- LANDING PAGE VIEW (Luxurious / Guest) --
-  // Selecting 3 specific categories for the preview
   const showcaseCategories = categories.filter(c => ['Marceneiro', 'Eletricista', 'Diarista'].includes(c.name));
 
   const features: FeatureContent[] = [
@@ -121,7 +119,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
   ];
 
   return (
-    <div className="relative -mt-8 md:-mt-12 -mx-4 md:mx-0 overflow-hidden">
+    <div className="relative -mt-20 w-full overflow-hidden min-h-screen">
         {/* Dark Premium Background */}
         <div className="absolute inset-0 bg-slate-900 z-0">
              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]"></div>
@@ -182,6 +180,65 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
                         </button>
                     )
                 })}
+            </div>
+
+            {/* TiaoCoin Economy Section */}
+            <div className="mt-32 max-w-5xl w-full">
+                <div className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-gray-800 to-black border border-yellow-500/20 shadow-2xl">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl"></div>
+                    
+                    <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 p-10 md:p-16 items-center">
+                        <div className="text-left">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/20 text-yellow-400 text-sm font-bold border border-yellow-500/30 mb-6">
+                                <WalletIcon className="w-4 h-4" /> Economia Inteligente
+                            </div>
+                            <h3 className="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
+                                Seu dinheiro vale <br/>
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">5% mais aqui.</span>
+                            </h3>
+                            <p className="text-gray-400 text-lg leading-relaxed mb-8">
+                                Ao pagar com nossa moeda exclusiva <strong>TiãoCoin (TC$)</strong>, você fica isento de taxas administrativas.
+                                É simples: 1 TC$ vale mais que 1 Real em serviços.
+                            </p>
+                            <button 
+                                onClick={onJoinInvitation}
+                                className="px-8 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-yellow-400 hover:text-black transition-colors"
+                            >
+                                Adquirir TiãoCoin
+                            </button>
+                        </div>
+                        
+                        {/* Visual representation of savings */}
+                        <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 opacity-50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-300">R$</div>
+                                        <div>
+                                            <p className="font-bold text-white">Pagamento em Real</p>
+                                            <p className="text-xs text-gray-400">Inclui taxa de serviço (5%)</p>
+                                        </div>
+                                    </div>
+                                    <p className="font-bold text-gray-300 line-through decoration-red-500">R$ 105,00</p>
+                                </div>
+
+                                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-2xl border border-yellow-500/30 relative overflow-hidden">
+                                    <div className="absolute right-0 top-0 bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded-bl-lg">MELHOR VALOR</div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center font-bold text-white shadow-lg">TC$</div>
+                                        <div>
+                                            <p className="font-bold text-white">Pagamento TiãoCoin</p>
+                                            <p className="text-xs text-yellow-200">Isento de taxas</p>
+                                        </div>
+                                    </div>
+                                    <p className="font-bold text-2xl text-yellow-400">TC$ 100,00</p>
+                                </div>
+                            </div>
+                            <p className="text-center text-xs text-gray-500 mt-4">Exemplo para um serviço de valor base 100.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Curated Categories Preview */}

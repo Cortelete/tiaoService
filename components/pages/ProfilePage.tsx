@@ -16,9 +16,11 @@ interface ProfilePageProps {
   onPayForService: (serviceRequest: ServiceRequest) => void;
   onAddFunds: () => void;
   onWithdraw: () => void;
+  onExchange: () => void; // Added prop
 }
 
 const ServiceRequestCard: React.FC<{ request: ServiceRequest, viewer: User, users: User[], onPay: (request: ServiceRequest) => void }> = ({ request, viewer, users, onPay }) => {
+    // ... (Existing ServiceRequestCard code remains unchanged)
     const isViewerClient = viewer.id === request.clientId;
     const otherPartyId = isViewerClient ? request.professionalId : request.clientId;
     const otherParty = users.find(u => u.id === otherPartyId);
@@ -82,7 +84,7 @@ const ServiceRequestCard: React.FC<{ request: ServiceRequest, viewer: User, user
 };
 
 
-export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onSave, onBack, serviceRequests, users, onPayForService, onAddFunds, onWithdraw }) => {
+export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onSave, onBack, serviceRequests, users, onPayForService, onAddFunds, onWithdraw, onExchange }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'profile' | 'wallet'>('dashboard');
 
   const TabButton: React.FC<{ tabName: 'dashboard' | 'profile' | 'wallet', label: string, icon: React.FC<any>}> = ({ tabName, label, icon: Icon }) => (
@@ -170,7 +172,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onSave, onBack, 
                     </div>
                 )}
                 {activeTab === 'profile' && <div className="animate-fade-in-up"><UserProfileForm user={user} onSave={onSave} /></div>}
-                {activeTab === 'wallet' && <div className="animate-fade-in-up"><WalletPage user={user} onAddFunds={onAddFunds} onWithdraw={onWithdraw} /></div>}
+                {activeTab === 'wallet' && <div className="animate-fade-in-up"><WalletPage user={user} onAddFunds={onAddFunds} onWithdraw={onWithdraw} onExchange={onExchange} /></div>}
             </div>
         </div>
       </div>

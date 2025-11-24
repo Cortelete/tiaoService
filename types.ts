@@ -4,8 +4,8 @@ import React from 'react';
 export type UserRole = 'client' | 'professional' | 'admin';
 export type UserStatus = 'pending' | 'approved' | 'blocked';
 export type ServicePeriod = 'Manhã' | 'Tarde' | 'Noite';
-export type TransactionType = 'deposit' | 'withdrawal' | 'payment_sent' | 'payment_received' | 'bonus';
-export type ActiveModal = 'login' | 'signup' | 'professional' | 'chat' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'serviceRequest' | 'confirmation' | 'cta' | 'addFunds' | 'withdraw' | 'servicePayment' | 'emergencyChat' | 'joinInvitation' | 'featureDetails';
+export type TransactionType = 'deposit' | 'withdrawal' | 'payment_sent' | 'payment_received' | 'bonus' | 'exchange';
+export type ActiveModal = 'login' | 'signup' | 'professional' | 'chat' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'serviceRequest' | 'confirmation' | 'cta' | 'addFunds' | 'withdraw' | 'servicePayment' | 'emergencyChat' | 'joinInvitation' | 'featureDetails' | 'exchange';
 
 
 export interface ServiceCategory {
@@ -20,8 +20,8 @@ export interface UserPricing {
 export interface Transaction {
     id: string;
     type: TransactionType;
-    amountTC: number; // Amount in TiãoCoins
-    brlAmount?: number; // Optional: corresponding BRL amount for deposits/withdrawals
+    amountTC?: number; // Amount in TiãoCoins
+    amountBRL?: number; // Amount in BRL
     description: string;
     timestamp: string;
     fromUserId?: number;
@@ -59,6 +59,7 @@ export interface User {
   servicesChangeRequest?: string[];
   profileChangeRequest?: Partial<User>;
   walletBalanceTC?: number; // TiãoCoin balance
+  walletBalanceBRL?: number; // Real (BRL) balance
   transactions?: Transaction[];
 }
 
