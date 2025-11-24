@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import type { User } from '../types';
 import { AnimatedButton } from './AnimatedButton';
-import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon, BriefcaseIcon, WrenchScrewdriverIcon, SparklesIcon, WalletIcon } from './icons';
+import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon, BriefcaseIcon, ElegantToolIcon, SparklesIcon, WalletIcon } from './icons';
 
 interface HeaderProps {
   currentUser: User | null;
@@ -17,45 +17,52 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, onLogin, onSignup, 
 
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/70 border-b border-white/50 shadow-sm transition-all duration-300">
-      <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+      <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
+        {/* Logo Section - Compact on Mobile */}
         <div 
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-2 cursor-pointer group shrink-0"
           onClick={() => onNavigate('home')}
         >
-          <div className="p-2.5 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-2xl shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
-             <WrenchScrewdriverIcon className="h-6 w-6 text-white transform -rotate-45" />
+          <div className="relative">
+             {/* Borrão Azul Escuro para fundo claro */}
+             <div className="absolute -inset-1 bg-gradient-to-r from-blue-700 to-slate-900 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-200"></div>
+             <ElegantToolIcon className="relative h-8 w-8 md:h-9 md:w-9 text-orange-500 drop-shadow-sm group-hover:scale-110 transition-transform duration-300" />
           </div>
-          <span className="text-2xl font-extrabold tracking-tight text-slate-800">
+          <span className="hidden md:block text-2xl font-extrabold tracking-tight text-slate-800">
             Tião<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-yellow-500">Service</span>
           </span>
         </div>
         
-        <nav>
+        <nav className="flex items-center gap-2 md:gap-4">
           {currentUser ? (
-            <div className="relative">
-                <div className="flex items-center gap-4">
-                    <button 
-                        onClick={() => { onNavigate('profile'); setIsMenuOpen(false); }} 
-                        className="hidden sm:flex items-center gap-2 text-sm font-bold text-slate-700 hover:text-orange-600 bg-white/80 hover:bg-white px-4 py-2 rounded-full transition-all border border-slate-100 shadow-sm hover:shadow-md"
-                    >
-                        <WalletIcon className="w-5 h-5 text-orange-500"/>
-                        <span>TC$ {(currentUser.walletBalanceTC || 0).toFixed(2)}</span>
-                    </button>
-                    
-                    <button 
-                        onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                        className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-slate-100/50 transition-colors"
-                    >
-                        <span className="hidden md:block font-bold text-slate-700">{currentUser.nickname || currentUser.name}</span>
-                        <img 
-                          src={currentUser.imageUrl || `https://i.pravatar.cc/150?u=${currentUser.id}`} 
-                          alt={currentUser.name} 
-                          className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md ring-2 ring-orange-500/20"
-                        />
-                    </button>
-                </div>
-              {isMenuOpen && (
-                <div className="absolute right-0 mt-4 w-72 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl py-3 animate-fade-in-down border border-white/50 overflow-hidden ring-1 ring-black/5 z-50">
+            <div className="relative flex items-center gap-2 md:gap-4">
+                {/* Wallet Button - Always visible now, smaller on mobile */}
+                <button 
+                    id="header-wallet-btn"
+                    onClick={() => { onNavigate('profile'); setIsMenuOpen(false); }} 
+                    className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-bold text-slate-700 hover:text-orange-600 bg-white/80 hover:bg-white px-3 py-1.5 md:px-4 md:py-2 rounded-full transition-all border border-slate-100 shadow-sm hover:shadow-md"
+                >
+                    <WalletIcon className="w-4 h-4 md:w-5 md:h-5 text-orange-500"/>
+                    <span className="whitespace-nowrap">TC$ {(currentUser.walletBalanceTC || 0).toFixed(2)}</span>
+                </button>
+                
+                {/* Profile Button */}
+                <button 
+                    id="header-profile-btn"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                    className="flex items-center gap-2 pl-1 pr-0 py-1 rounded-full hover:bg-slate-100/50 transition-colors"
+                >
+                    <span className="hidden lg:block font-bold text-slate-700 truncate max-w-[100px]">{currentUser.nickname || currentUser.name}</span>
+                    <img 
+                      src={currentUser.imageUrl || `https://i.pravatar.cc/150?u=${currentUser.id}`} 
+                      alt={currentUser.name} 
+                      className="w-9 h-9 md:w-11 md:h-11 rounded-full object-cover border-2 border-white shadow-md ring-2 ring-orange-500/20"
+                    />
+                </button>
+
+                {/* Dropdown Menu */}
+                {isMenuOpen && (
+                <div className="absolute right-0 top-full mt-4 w-72 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl py-3 animate-fade-in-down border border-white/50 overflow-hidden ring-1 ring-black/5 z-50">
                   <div className="px-6 py-4 border-b border-slate-100/50 mb-2 bg-slate-50/50">
                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Conta Conectada</p>
                      <p className="font-bold text-slate-800 truncate text-lg">{currentUser.name}</p>
@@ -92,11 +99,17 @@ export const Header: React.FC<HeaderProps> = ({ currentUser, onLogin, onSignup, 
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-4">
-              <button onClick={onLogin} className="font-bold text-slate-600 hover:text-orange-500 transition-colors hidden md:block px-4 py-2">
+            <div className="flex items-center gap-2 md:gap-4">
+              <button 
+                onClick={onLogin} 
+                className="font-bold text-sm md:text-base text-slate-600 hover:text-orange-500 transition-colors px-2 py-2"
+              >
                 Entrar
               </button>
-              <AnimatedButton onClick={onSignup}>
+              <AnimatedButton 
+                onClick={onSignup}
+                className="!px-4 !py-2 !text-xs md:!px-8 md:!py-3.5 md:!text-base whitespace-nowrap"
+              >
                 Cadastre-se
               </AnimatedButton>
             </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -24,6 +25,7 @@ import { EmergencyChatModal } from './components/modals/EmergencyChatModal';
 import { JoinInvitationModal } from './components/modals/JoinInvitationModal';
 import { FeatureModal } from './components/modals/FeatureModal';
 import { ConfirmationModal } from './components/modals/ConfirmationModal';
+import { OnboardingTour, TourStep } from './components/OnboardingTour';
 
 import { mockUsers, mockServiceRequests, serviceCategories } from './constants';
 import type { User, ServiceRequest, UserCredentials, AiHelpResponse, UserStatus, FeatureContent, ChatMessage, ActiveModal } from './types';
@@ -56,6 +58,68 @@ export const App = () => {
   // Payment State
   const [serviceToPay, setServiceToPay] = useState<ServiceRequest | null>(null);
 
+  // Onboarding State
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Tour Steps Configuration
+  const clientTourSteps: TourStep[] = [
+      {
+          title: "Bem-vindo ao TiãoService! ✨",
+          content: "Olá! Eu sou a Mia, sua assistente virtual. Vou te mostrar como encontrar os melhores serviços da cidade em poucos segundos."
+      },
+      {
+          targetId: "home-search-bar",
+          title: "MIAjuda Inteligente",
+          content: "Aqui é onde a mágica acontece. Não sabe qual profissional chamar? Apenas descreva seu problema (ex: 'vazamento na pia') e eu encontrarei a solução ideal para você."
+      },
+      {
+          targetId: "home-categories",
+          title: "Explore Categorias",
+          content: "Prefere navegar? Aqui você encontra nossos especialistas divididos por área, todos verificados e avaliados."
+      },
+      {
+          targetId: "header-wallet-btn",
+          title: "Sua Carteira Digital",
+          content: "Aqui você gerencia seus TiãoCoins (TC$). Lembre-se: pagar com nossa moeda garante 5% de desconto em qualquer serviço!"
+      },
+      {
+          targetId: "header-profile-btn",
+          title: "Seu Espaço",
+          content: "Acesse seu perfil para ver suas solicitações, editar seus dados e acompanhar o status dos serviços. Aproveite a experiência TiãoService!"
+      }
+  ];
+
+  const professionalTourSteps: TourStep[] = [
+      {
+          title: "Bem-vindo, Parceiro! 🛠️",
+          content: "Olá! Eu sou a Mia. Estou aqui para ajudar você a turbinar seus ganhos no TiãoService."
+      },
+      {
+          targetId: "header-wallet-btn",
+          title: "Seus Ganhos",
+          content: "Acompanhe seu saldo em tempo real aqui. Você recebe em TiãoCoins ou Reais e pode sacar para sua conta bancária quando quiser."
+      },
+      {
+          targetId: "header-profile-btn",
+          title: "Menu Completo",
+          content: "Clique aqui para acessar as 'Oportunidades' (novos serviços), editar seu perfil profissional e ver suas avaliações."
+      },
+      {
+          title: "Tudo Pronto!",
+          content: "Mantenha seu perfil atualizado e fique atento às notificações. Bons negócios!"
+      }
+  ];
+
+  const handleTourComplete = () => {
+      if (currentUser) {
+          const updatedUser = { ...currentUser, hasSeenOnboarding: true };
+          setCurrentUser(updatedUser);
+          // In a real app, we would make an API call here to persist this state
+          setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+      }
+      setShowOnboarding(false);
+  };
+
   const handleLogin = (credentials: UserCredentials) => {
     const user = users.find(u => u.email === credentials.email && u.password === credentials.password);
     if (user) {
@@ -66,6 +130,9 @@ export const App = () => {
         setActiveModal(null);
         if (!user.isProfileComplete) {
             setActiveModal('completeProfile');
+        } else if (user.hasSeenOnboarding === false) {
+             // Trigger onboarding if user hasn't seen it
+             setTimeout(() => setShowOnboarding(true), 500);
         }
         return { success: true };
     }
@@ -80,12 +147,23 @@ export const App = () => {
           isProfileComplete: false, 
           status: newUser.role === 'professional' ? 'pending' : 'approved',
           regionId: 1, // Default region
-          transactions: []
+          transactions: [],
+          hasSeenOnboarding: false // New users haven't seen the tour
       };
       setUsers([...users, user]);
       setCurrentUser(user);
       setActiveModal('completeProfile');
       return true;
+  };
+
+  const handleCompleteProfile = (updatedUser: User) => {
+      handleUpdateUser(updatedUser);
+      if(updatedUser.role === 'professional' && updatedUser.status === 'pending') {
+          setActiveModal('pendingApproval');
+      } else {
+          // If profile is complete and not pending, show onboarding
+          setShowOnboarding(true);
+      }
   };
 
   const handleUpdateUser = (updatedUser: User) => {
@@ -97,6 +175,7 @@ export const App = () => {
       setCurrentUser(null);
       setCurrentPage('home');
       setActiveModal(null);
+      setShowOnboarding(false);
   };
 
   const handleAiHelpRequest = async (problemDescription: string): Promise<AiHelpResponse> => {
@@ -134,9 +213,48 @@ export const App = () => {
         }
   };
   
-  const handleEmergencyDetected = (text: string) => {
-      setEmergencyMessages([{ senderId: -1, text: `Detectei uma possível emergência: "${text}".\n\nEstou monitorando. Se precisar, use os botões acima para chamar ajuda imediatamente.`, timestamp: new Date().toISOString() }]);
+  const handleEmergencyDetected = async (text: string) => {
+      // 1. Clear previous or set initial state
+      setEmergencyMessages([]);
       setActiveModal('emergencyChat');
+      
+      // 2. Add user's initial message to chat
+      const userMsg: ChatMessage = { 
+          senderId: currentUser?.id || 0, 
+          text: text, 
+          timestamp: new Date().toISOString() 
+      };
+      setEmergencyMessages([userMsg]);
+      setIsSendingMessage(true);
+
+      try {
+          // 3. Generate immediate AI guidance
+          const response = await ai.models.generateContent({
+               model: "gemini-2.5-flash",
+               contents: `
+                Você é a Mia, assistente de emergência do TiãoService.
+                O usuário relatou: "${text}".
+                
+                Seu objetivo: Acalmar e dar a primeira instrução de segurança CRÍTICA.
+                Se for saúde/clínico (infarto, desmaio), instrua a ligar para o SAMU (192).
+                Se for trauma/acidente/fogo (batida, queda, incêndio), instrua a ligar para Bombeiros/Siate (193).
+                Se for crime, Polícia (190).
+                
+                Seja curta, humana e empática. Não faça listas longas agora.
+               `,
+           });
+
+           const aiMsg: ChatMessage = { 
+               senderId: -1, 
+               text: response.text || "Estou aqui com você. Por favor, mantenha a calma. Se houver risco imediato à vida, ligue para os serviços de emergência nos botões acima.", 
+               timestamp: new Date().toISOString() 
+           };
+           setEmergencyMessages(prev => [...prev, aiMsg]);
+      } catch (e) {
+          console.error(e);
+      } finally {
+          setIsSendingMessage(false);
+      }
   };
 
   const handleEmergencyMessage = async (text: string) => {
@@ -147,7 +265,16 @@ export const App = () => {
        try {
            const response = await ai.models.generateContent({
                model: "gemini-2.5-flash",
-               contents: `Você é uma IA de suporte a emergências. O usuário disse: "${text}". O contexto anterior era uma emergência doméstica. Acalme o usuário e dê instruções curtas e diretas de segurança.`,
+               contents: `
+               Você é a Mia, IA de suporte a emergências.
+               Histórico recente: O usuário está em uma situação de possível emergência.
+               Mensagem atual do usuário: "${text}".
+               
+               Aja com calma, empatia e objetividade.
+               1. Acolha o sentimento.
+               2. Dê uma instrução clara do que fazer (ou não fazer) enquanto a ajuda não chega.
+               3. Reforce qual número ligar se a situação piorar (192, 193, 190).
+               `,
            });
            
            const aiMsg: ChatMessage = { senderId: -1, text: response.text || '', timestamp: new Date().toISOString() };
@@ -331,6 +458,8 @@ export const App = () => {
                   onAiSearch={(query) => { setAiQuery(query); setCurrentPage('aiHelp'); }}
                   onShowFeature={(content) => { setFeatureContent(content); setActiveModal('featureDetails'); }}
                   onJoinInvitation={() => setActiveModal('joinInvitation')}
+                  professionals={users.filter(u => u.role === 'professional' && u.status === 'approved')}
+                  onViewProfessional={(prof) => { setSelectedProfessional(prof); setActiveModal('professional'); }}
                />;
       case 'professionals':
         return <FindProfessionalsPage 
@@ -421,15 +550,26 @@ export const App = () => {
         onNavigate={setCurrentPage}
       />
       
-      <main className={isLandingPage ? "w-full pb-32" : "container mx-auto px-4 py-8 pb-32"}>
+      {/* Onboarding Tour */}
+      {showOnboarding && currentUser && (
+          <OnboardingTour 
+            steps={currentUser.role === 'professional' ? professionalTourSteps : clientTourSteps}
+            onComplete={handleTourComplete}
+            onSkip={handleTourComplete}
+          />
+      )}
+      
+      {/* Remove padding-bottom when on landing page to remove white gap */}
+      <main className={isLandingPage ? "w-full" : "container mx-auto px-4 py-8 pb-32"}>
         {renderPage()}
       </main>
       
-      <Footer />
+      {/* Remove margin-top when on landing page so footer connects with dark home page background */}
+      <Footer className={isLandingPage ? "" : "mt-12"} />
 
       {activeModal === 'login' && <LoginModal onClose={() => setActiveModal(null)} onLogin={handleLogin} onSwitchToSignup={() => setActiveModal('signup')} />}
       {activeModal === 'signup' && <SignupModal onClose={() => setActiveModal(null)} onSignup={handleSignup} onSwitchToLogin={() => setActiveModal('login')} />}
-      {activeModal === 'completeProfile' && currentUser && <CompleteProfileModal user={currentUser} onClose={() => setActiveModal(null)} onSave={(u) => { handleUpdateUser(u); if(u.role === 'professional' && u.status === 'pending') setActiveModal('pendingApproval'); }} />}
+      {activeModal === 'completeProfile' && currentUser && <CompleteProfileModal user={currentUser} onClose={() => setActiveModal(null)} onSave={handleCompleteProfile} />}
       {activeModal === 'pendingApproval' && <PendingApprovalModal onClose={() => setActiveModal(null)} />}
       {activeModal === 'professional' && selectedProfessional && (
         <ProfessionalModal 

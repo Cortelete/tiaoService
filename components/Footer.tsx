@@ -1,12 +1,14 @@
 
 import React from 'react';
+import { ElegantToolIcon } from './icons';
 
 interface FooterProps {
+  className?: string;
 }
 
-export const Footer: React.FC<FooterProps> = () => {
+export const Footer: React.FC<FooterProps> = ({ className = 'mt-12' }) => {
   return (
-    <footer className="bg-slate-900 text-white mt-12 border-t border-slate-800 relative overflow-hidden">
+    <footer className={`bg-slate-900 text-white border-t border-slate-800 relative overflow-hidden ${className}`}>
       {/* Background glow effects */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2"></div>
@@ -15,8 +17,9 @@ export const Footer: React.FC<FooterProps> = () => {
         <div className="flex flex-col justify-center items-center text-center">
           <div>
             <div className="flex items-center justify-center gap-3 mb-6">
-                 <div className="p-2 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl shadow-lg shadow-orange-500/20">
-                    <span className="text-2xl">✨</span>
+                 <div className="relative">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full blur opacity-25"></div>
+                    <ElegantToolIcon className="relative h-10 w-10 text-orange-500" />
                  </div>
                 <span className="text-3xl font-extrabold tracking-tight">Tião<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-yellow-500">Service</span></span>
             </div>

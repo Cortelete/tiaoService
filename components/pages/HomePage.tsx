@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import type { User, ServiceCategory, FeatureContent } from '../../types';
 import { ServiceCategoryCard } from '../ServiceCategoryCard';
-import { SparklesIcon, ShieldCheckIcon, BoltIcon, StarIcon, ChevronRightIcon, WalletIcon } from '../icons';
+import { SparklesIcon, ShieldCheckIcon, BoltIcon, StarIcon, ChevronRightIcon, WalletIcon, UserGroupIcon, BuildingStorefrontIcon } from '../icons';
 import { VoiceInput } from '../VoiceInput';
+import { ProfessionalCard } from '../ProfessionalCard';
 
 interface HomePageProps {
   onSelectCategory: (category: string) => void;
@@ -11,10 +13,26 @@ interface HomePageProps {
   onAiSearch: (query: string) => void;
   onShowFeature: (feature: FeatureContent) => void;
   onJoinInvitation: () => void;
+  professionals?: User[];
+  onViewProfessional?: (prof: User) => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories, currentUser, onAiSearch, onShowFeature, onJoinInvitation }) => {
+export const HomePage: React.FC<HomePageProps> = ({ 
+    onSelectCategory, 
+    categories, 
+    currentUser, 
+    onAiSearch, 
+    onShowFeature, 
+    onJoinInvitation,
+    professionals = [],
+    onViewProfessional
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Exploration Mode State
+  const [exploreMode, setExploreMode] = useState<'categories' | 'rated' | 'alphabetical'>('categories');
+  const [selectedLetter, setSelectedLetter] = useState('A');
+  const [nameFilter, setNameFilter] = useState('');
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +45,25 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
       setSearchQuery(text);
   };
   
+  // Data processing for different views
+  const topRatedProfessionals = useMemo(() => {
+      let filtered = [...professionals];
+      if (nameFilter) {
+          filtered = filtered.filter(p => p.name.toLowerCase().includes(nameFilter.toLowerCase()));
+      }
+      return filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 9);
+  }, [professionals, nameFilter]);
+
+  const alphabet = useMemo(() => Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)), []);
+  
+  const alphabeticalProfessionals = useMemo(() => {
+      let filtered = professionals.filter(p => p.name.toUpperCase().startsWith(selectedLetter));
+       if (nameFilter) {
+          filtered = filtered.filter(p => p.name.toLowerCase().includes(nameFilter.toLowerCase()));
+      }
+      return filtered;
+  }, [professionals, selectedLetter, nameFilter]);
+
   // -- LOGGED IN VIEW (Classic / Functional) --
   if (currentUser) {
       return (
@@ -42,7 +79,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
           </p>
 
           {/* AI Search Bar */}
-            <div className="mt-10 max-w-3xl mx-auto px-4 animate-fade-in-up">
+            <div id="home-search-bar" className="mt-10 max-w-3xl mx-auto px-4 animate-fade-in-up">
                 <form onSubmit={handleSearchSubmit} className="relative group">
                     <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-blue-500 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
                     <div className="relative flex items-center bg-white rounded-full shadow-xl border border-gray-100 p-1 md:p-2 gap-2">
@@ -72,17 +109,130 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
                 </p>
             </div>
 
-          <div className="mt-16">
-            <h3 className="text-2xl font-bold text-gray-700">Explore por categoria</h3>
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-              {categories.map((category) => (
-                <ServiceCategoryCard 
-                  key={category.name} 
-                  category={category} 
-                  onClick={() => onSelectCategory(category.name)} 
-                />
-              ))}
+          {/* Explore Tabs */}
+          <div id="home-categories" className="mt-16">
+            <div className="flex justify-center mb-8">
+                <div className="bg-white p-1 rounded-full shadow-sm border border-gray-100 inline-flex">
+                    <button 
+                        onClick={() => setExploreMode('categories')}
+                        className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${exploreMode === 'categories' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                        Categorias
+                    </button>
+                    <button 
+                        onClick={() => setExploreMode('rated')}
+                        className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${exploreMode === 'rated' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                        <StarIcon className="w-4 h-4" /> Top Stars
+                    </button>
+                    <button 
+                        onClick={() => setExploreMode('alphabetical')}
+                        className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${exploreMode === 'alphabetical' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                        Índice A-Z
+                    </button>
+                </div>
             </div>
+
+            {/* Quick Name Filter (Visible on Rated and AZ) */}
+            {exploreMode !== 'categories' && (
+                <div className="max-w-md mx-auto mb-8 px-4">
+                     <input 
+                        type="text" 
+                        value={nameFilter}
+                        onChange={(e) => setNameFilter(e.target.value)}
+                        placeholder="Filtrar por nome..." 
+                        className="w-full p-3 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                    />
+                </div>
+            )}
+
+            {/* VIEW: Categories */}
+            {exploreMode === 'categories' && (
+                <div className="animate-fade-in-up">
+                    <h3 className="text-2xl font-bold text-gray-700 mb-6">Explore por Categoria</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+                    {categories.map((category) => (
+                        <ServiceCategoryCard 
+                        key={category.name} 
+                        category={category} 
+                        onClick={() => onSelectCategory(category.name)} 
+                        />
+                    ))}
+                    </div>
+                </div>
+            )}
+
+            {/* VIEW: Top Rated */}
+            {exploreMode === 'rated' && (
+                 <div className="animate-fade-in-up">
+                    <h3 className="text-2xl font-bold text-gray-700 mb-6">Os Favoritos da Galera 🌟</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {topRatedProfessionals.map(prof => (
+                            <ProfessionalCard 
+                                key={prof.id}
+                                professional={prof}
+                                onViewDetails={() => onViewProfessional && onViewProfessional(prof)}
+                                highlightBadge="Top Rated"
+                                highlightColor="bg-yellow-500"
+                            />
+                        ))}
+                        {topRatedProfessionals.length === 0 && (
+                            <p className="col-span-3 text-gray-500">Nenhum profissional encontrado com este filtro.</p>
+                        )}
+                    </div>
+                 </div>
+            )}
+
+            {/* VIEW: Alphabetical */}
+            {exploreMode === 'alphabetical' && (
+                <div className="animate-fade-in-up">
+                    <h3 className="text-2xl font-bold text-gray-700 mb-6">Índice Profissional</h3>
+                    
+                    {/* Alphabet Scroller */}
+                    <div className="flex gap-2 overflow-x-auto pb-4 mb-6 px-4 md:justify-center no-scrollbar">
+                        {alphabet.map(letter => (
+                            <button
+                                key={letter}
+                                onClick={() => setSelectedLetter(letter)}
+                                className={`flex-shrink-0 w-10 h-10 rounded-full font-bold text-sm transition-all ${
+                                    selectedLetter === letter 
+                                    ? 'bg-orange-600 text-white shadow-lg scale-110' 
+                                    : 'bg-white text-gray-500 border border-gray-200 hover:bg-orange-50'
+                                }`}
+                            >
+                                {letter}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {alphabeticalProfessionals.map(prof => (
+                             <div 
+                                key={prof.id} 
+                                onClick={() => onViewProfessional && onViewProfessional(prof)}
+                                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-200 transition-all cursor-pointer flex items-center gap-3 text-left"
+                            >
+                                <img src={prof.imageUrl || `https://i.pravatar.cc/150?u=${prof.id}`} className="w-12 h-12 rounded-full object-cover" alt={prof.name}/>
+                                <div>
+                                    <h4 className="font-bold text-gray-800 truncate">{prof.name}</h4>
+                                    <p className="text-xs text-orange-600 font-semibold truncate">{prof.services?.join(', ')}</p>
+                                    <div className="flex items-center text-xs text-gray-400 mt-1">
+                                        <StarIcon className="w-3 h-3 text-yellow-400 mr-1"/>
+                                        {prof.rating?.toFixed(1)}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                         {alphabeticalProfessionals.length === 0 && (
+                            <div className="col-span-4 py-10 text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                Nenhum profissional encontrado com a letra "{selectedLetter}".
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
           </div>
            <style>{`
               @keyframes fade-in-up {
@@ -91,6 +241,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
               }
               .animate-fade-in-up {
                 animation: fade-in-up 0.5s ease-out forwards;
+              }
+              .no-scrollbar::-webkit-scrollbar {
+                display: none;
+              }
+              .no-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
               }
             `}</style>
         </div>
@@ -127,7 +284,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSelectCategory, categories
              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
         </div>
 
-        <div className="relative z-10 px-4 py-20 md:py-32 flex flex-col items-center text-center">
+        <div className="relative z-10 px-4 pt-36 pb-20 md:pt-52 md:pb-32 flex flex-col items-center text-center">
             
             {/* Hero Section */}
             <div className="animate-fade-in-up">

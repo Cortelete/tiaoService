@@ -17,10 +17,17 @@ import {
   StopIcon,
   SparklesIcon,
   CpuChipIcon,
-  RectangleGroupIcon
+  RectangleGroupIcon,
+  HeartIcon
 } from './components/icons';
 
 export const serviceCategories: ServiceCategory[] = [
+  { name: 'Enfermagem', icon: HeartIcon },
+  { name: 'Médico', icon: HeartIcon },
+  { name: 'Fisioterapeuta', icon: HeartIcon },
+  { name: 'Cuidador', icon: HeartIcon },
+  { name: 'Nutricionista', icon: HeartIcon },
+  { name: 'Psicólogo', icon: HeartIcon },
   { name: 'Encanador', icon: WrenchScrewdriverIcon },
   { name: 'Pintor', icon: PaintBrushIcon },
   { name: 'Eletricista', icon: BoltIcon },
@@ -448,6 +455,181 @@ export const mockUsers: User[] = [
     longitude: -50.1610,
     transactions: [],
   },
+
+  // HEALTH PROFESSIONALS
+  // 121. Ana Julia (Enfermeira) - Perto do Hospital Bom Jesus (Centro)
+  {
+    id: 121,
+    email: 'ana.enfermeira@tiao.com',
+    password: 'prof',
+    name: 'Ana Julia',
+    role: 'professional',
+    phone: '42988776655',
+    street: 'Av. Dom Pedro II, 50',
+    neighborhood: 'Nova Rússia',
+    city: 'Ponta Grossa',
+    state: 'PR',
+    regionId: 4,
+    isProfileComplete: true,
+    status: 'approved',
+    services: ['Enfermagem'],
+    cpfCnpj: 'COREN-PR 123456',
+    bio: 'Enfermeira especializada em cuidados domiciliares, curativos e administração de medicamentos.',
+    imageUrl: 'https://i.pravatar.cc/300?u=121',
+    rating: 5.0,
+    reviewsCount: 32,
+    pricing: { description: 'Visita a partir de R$ 80' },
+    walletBalanceTC: 1200,
+    walletBalanceBRL: 0,
+    latitude: -25.0870,
+    longitude: -50.1690,
+    transactions: [],
+  },
+
+  // 122. Dr. Paulo (Médico) - Perto do Hospital Santa Casa (Centro)
+  {
+    id: 122,
+    email: 'dr.paulo@tiao.com',
+    password: 'prof',
+    name: 'Dr. Paulo Mendes',
+    role: 'professional',
+    phone: '42977665544',
+    street: 'Rua Dr. Francisco Búrzio, 800',
+    neighborhood: 'Centro',
+    city: 'Ponta Grossa',
+    state: 'PR',
+    regionId: 1,
+    isProfileComplete: true,
+    status: 'approved',
+    services: ['Médico'],
+    cpfCnpj: 'CRM-PR 9988',
+    bio: 'Clínico Geral. Consultas domiciliares para idosos e pacientes com mobilidade reduzida.',
+    imageUrl: 'https://i.pravatar.cc/300?u=122',
+    rating: 4.9,
+    reviewsCount: 150,
+    pricing: { description: 'Consulta R$ 350' },
+    walletBalanceTC: 5000,
+    walletBalanceBRL: 1200,
+    latitude: -25.0905,
+    longitude: -50.1625,
+    transactions: [],
+  },
+
+  // 123. Lucas Fisioterapeuta - Oficinas
+  {
+    id: 123,
+    email: 'lucas.fisio@tiao.com',
+    password: 'prof',
+    name: 'Lucas Fisio',
+    role: 'professional',
+    phone: '42966554433',
+    street: 'Rua Franco Grilo, 200',
+    neighborhood: 'Oficinas',
+    city: 'Ponta Grossa',
+    state: 'PR',
+    regionId: 5,
+    isProfileComplete: true,
+    status: 'approved',
+    services: ['Fisioterapeuta'],
+    cpfCnpj: 'CREFITO 554433',
+    bio: 'Reabilitação motora e respiratória no conforto do seu lar.',
+    imageUrl: 'https://i.pravatar.cc/300?u=123',
+    rating: 4.8,
+    reviewsCount: 45,
+    pricing: { description: 'Sessão R$ 120' },
+    walletBalanceTC: 900,
+    walletBalanceBRL: 0,
+    latitude: -25.1080,
+    longitude: -50.1520,
+    transactions: [],
+  },
+
+  // 124. Dra. Helena (Psicóloga) - Estrela
+  {
+    id: 124,
+    email: 'helena.psi@tiao.com',
+    password: 'prof',
+    name: 'Dra. Helena',
+    role: 'professional',
+    phone: '42955443322',
+    street: 'Rua Nilo Peçanha, 100',
+    neighborhood: 'Estrela',
+    city: 'Ponta Grossa',
+    state: 'PR',
+    regionId: 5,
+    isProfileComplete: true,
+    status: 'approved',
+    services: ['Psicólogo'],
+    cpfCnpj: 'CRP-08/12345',
+    bio: 'Terapia cognitivo-comportamental. Atendimento online e presencial.',
+    imageUrl: 'https://i.pravatar.cc/300?u=124',
+    rating: 5.0,
+    reviewsCount: 89,
+    pricing: { description: 'Sessão R$ 150' },
+    walletBalanceTC: 2200,
+    walletBalanceBRL: 300,
+    latitude: -25.1000,
+    longitude: -50.1580,
+    transactions: [],
+  },
+  
+  // 125. Solange (Cuidadora) - Uvaranas
+  {
+    id: 125,
+    email: 'solange.care@tiao.com',
+    password: 'prof',
+    name: 'Solange Cuidadora',
+    role: 'professional',
+    phone: '42944332211',
+    street: 'Rua Teixeira Soares, 500',
+    neighborhood: 'Uvaranas',
+    city: 'Ponta Grossa',
+    state: 'PR',
+    regionId: 2,
+    isProfileComplete: true,
+    status: 'approved',
+    services: ['Cuidador'],
+    cpfCnpj: '111.222.333-44',
+    bio: 'Experiência de 10 anos com idosos. Curso de primeiros socorros.',
+    imageUrl: 'https://i.pravatar.cc/300?u=125',
+    rating: 4.9,
+    reviewsCount: 60,
+    pricing: { description: 'Plantão 12h R$ 180' },
+    walletBalanceTC: 800,
+    walletBalanceBRL: 50,
+    latitude: -25.0890,
+    longitude: -50.1420,
+    transactions: [],
+  },
+
+   // 126. Nutricionista Carla - Centro
+  {
+    id: 126,
+    email: 'carla.nutri@tiao.com',
+    password: 'prof',
+    name: 'Carla Nutri',
+    role: 'professional',
+    phone: '42933221100',
+    street: 'Rua XV de Novembro, 400',
+    neighborhood: 'Centro',
+    city: 'Ponta Grossa',
+    state: 'PR',
+    regionId: 1,
+    isProfileComplete: true,
+    status: 'approved',
+    services: ['Nutricionista'],
+    cpfCnpj: 'CRN-8 1234',
+    bio: 'Reeducação alimentar e nutrição esportiva.',
+    imageUrl: 'https://i.pravatar.cc/300?u=126',
+    rating: 4.7,
+    reviewsCount: 40,
+    pricing: { description: 'Plano mensal R$ 250' },
+    walletBalanceTC: 1500,
+    walletBalanceBRL: 0,
+    latitude: -25.0925,
+    longitude: -50.1615,
+    transactions: [],
+  },
 ];
 
 export const mockServiceRequests: ServiceRequest[] = [
@@ -518,4 +700,32 @@ export const serviceRequestFormFields: Record<string, FormField[]> = {
         { name: 'device_type', label: 'Tipo de Dispositivo', type: 'select', options: ['Computador/Notebook', 'Celular/Tablet', 'Impressora', 'Rede/Wi-Fi'] },
         { name: 'problem_summary', label: 'Resumo do Problema', type: 'text', placeholder: 'Ex: Computador não liga, Wi-Fi lento' }
     ],
+    // HEALTH FIELDS
+    'Enfermagem': [
+        { name: 'patient_age', label: 'Idade do Paciente', type: 'text', placeholder: 'Ex: 75 anos' },
+        { name: 'procedure_type', label: 'Tipo de Procedimento', type: 'select', options: ['Curativo', 'Aplicação de Medicamento', 'Banho', 'Acompanhamento', 'Outro'] },
+        { name: 'mobility', label: 'Mobilidade do Paciente', type: 'select', options: ['Anda sozinho', 'Anda com ajuda', 'Acamado'] }
+    ],
+    'Médico': [
+        { name: 'symptoms', label: 'Principais Sintomas', type: 'text', placeholder: 'Ex: Febre alta, dor de garganta...' },
+        { name: 'consultation_type', label: 'Tipo de Consulta', type: 'select', options: ['Visita Domiciliar', 'Telemedicina'] },
+        { name: 'patient_age', label: 'Idade do Paciente', type: 'text', placeholder: 'Ex: 30 anos' }
+    ],
+    'Fisioterapeuta': [
+        { name: 'injury_type', label: 'Tipo de Lesão/Queixa', type: 'text', placeholder: 'Ex: Dor lombar, Pós-operatório joelho' },
+        { name: 'objective', label: 'Objetivo', type: 'select', options: ['Alívio de dor', 'Reabilitação', 'Fortalecimento', 'Respiratória'] }
+    ],
+    'Cuidador': [
+        { name: 'care_type', label: 'Quem será cuidado?', type: 'select', options: ['Idoso', 'Adulto em recuperação', 'Criança'] },
+        { name: 'shift_duration', label: 'Duração do Plantão', type: 'select', options: ['Pontual (algumas horas)', 'Diurno (8h-18h)', 'Noturno (19h-7h)', '24 horas'] },
+        { name: 'tasks', label: 'Principais Tarefas', type: 'text', placeholder: 'Ex: Banho, alimentação, companhia...' }
+    ],
+    'Psicólogo': [
+        { name: 'therapy_mode', label: 'Modalidade', type: 'select', options: ['Online', 'Presencial (Domiciliar)'] },
+        { name: 'theme', label: 'Tema Principal', type: 'text', placeholder: 'Ex: Ansiedade, Luto, Relacionamento...' }
+    ],
+    'Nutricionista': [
+        { name: 'goal', label: 'Objetivo', type: 'select', options: ['Emagrecimento', 'Ganho de Massa', 'Reeducação Alimentar', 'Controle de Doença (Diabetes/Hipertensão)'] },
+        { name: 'consultation_mode', label: 'Modalidade', type: 'select', options: ['Online', 'Presencial (Domiciliar)'] }
+    ]
 };

@@ -43,6 +43,7 @@ export interface User {
   regionId: number;
   isProfileComplete: boolean;
   status?: UserStatus;
+  hasSeenOnboarding?: boolean; // New field for onboarding tour
   
   // Geolocation
   latitude?: number;
