@@ -1,7 +1,6 @@
 
 import React from 'react';
 
-// Fix: Added a 'disabled' prop to the component's interface to allow it to be disabled.
 interface AnimatedButtonProps {
   children: React.ReactNode;
   onClick: () => void;
@@ -13,10 +12,22 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({ children, onClic
   return (
     <button
       onClick={onClick}
-      // Fix: Passed the 'disabled' prop to the underlying button element.
       disabled={disabled}
-      // Fix: Updated class names to conditionally apply disabled styles and hover effects.
-      className={`px-4 py-2 md:px-6 md:py-2.5 bg-orange-500 text-white font-bold rounded-lg shadow-md active:scale-95 transform transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-75 ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600 hover:scale-105'}`}
+      className={`
+        px-8 py-3.5 
+        bg-gradient-to-r from-orange-500 to-orange-400 
+        hover:to-orange-500 
+        text-white font-bold text-base tracking-wide
+        rounded-2xl 
+        shadow-lg shadow-orange-500/30 
+        hover:shadow-xl hover:shadow-orange-500/50 
+        active:scale-[0.98] 
+        transform transition-all duration-300 ease-out 
+        focus:outline-none focus:ring-4 focus:ring-orange-500/20 
+        border border-orange-400/20
+        ${className} 
+        ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:-translate-y-1'}
+      `}
     >
       {children}
     </button>

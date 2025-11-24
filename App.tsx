@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
-import type { User, ServiceCategory, ChatMessage, UserCredentials, AiHelpResponse, UserStatus, ServiceRequest, ServiceRequestFormData, ActiveModal, Transaction, JobPost } from './types';
+import type { User, ServiceCategory, ChatMessage, UserCredentials, AiHelpResponse, UserStatus, ServiceRequest, ServiceRequestFormData, ActiveModal, Transaction, JobPost, FeatureContent } from './types';
 import { serviceCategories, mockUsers, mockServiceRequests } from './constants';
 
 import { Header } from './components/Header';
@@ -26,6 +26,8 @@ import { AddFundsModal } from './components/modals/AddFundsModal';
 import { WithdrawModal } from './components/modals/WithdrawModal';
 import { ServicePaymentModal } from './components/modals/ServicePaymentModal';
 import { EmergencyChatModal } from './components/modals/EmergencyChatModal';
+import { JoinInvitationModal } from './components/modals/JoinInvitationModal';
+import { FeatureModal } from './components/modals/FeatureModal';
 
 
 type Page = 'home' | 'findProfessionals' | 'profile' | 'admin' | 'opportunities' | 'aiHelp';
@@ -41,6 +43,7 @@ export const App: React.FC = () => {
   
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<User | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState<FeatureContent | null>(null);
   
   const [chatHistory, setChatHistory] = useState<Record<string, ChatMessage[]>>({});
   const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -109,8 +112,13 @@ export const App: React.FC = () => {
   };
 
   const handleSelectCategory = (category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage('findProfessionals');
+    // Logic split: If user is logged in, proceed. If not, show invitation.
+    if (currentUser) {
+        setSelectedCategory(category);
+        setCurrentPage('findProfessionals');
+    } else {
+        setActiveModal('joinInvitation');
+    }
   };
 
   const handleViewProfessional = (professional: User) => {
@@ -127,6 +135,11 @@ export const App: React.FC = () => {
   const handleHomeAiSearch = (query: string) => {
       setInitialAiQuery(query);
       setCurrentPage('aiHelp');
+  };
+
+  const handleShowFeature = (feature: FeatureContent) => {
+      setSelectedFeature(feature);
+      setActiveModal('featureDetails');
   };
 
   const handleSendMessage = async (text: string) => {
@@ -542,12 +555,14 @@ export const App: React.FC = () => {
                   categories={serviceCategories}
                   currentUser={currentUser}
                   onAiSearch={handleHomeAiSearch}
+                  onShowFeature={handleShowFeature}
+                  onJoinInvitation={() => setActiveModal('joinInvitation')}
                />;
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 font-sans">
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-800 antialiased selection:bg-orange-200 selection:text-orange-900">
       <Header 
         currentUser={currentUser} 
         onLogin={() => setActiveModal('login')} 
@@ -555,7 +570,7 @@ export const App: React.FC = () => {
         onLogout={handleLogout}
         onNavigate={setCurrentPage}
       />
-      <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
+      <main className="flex-grow container mx-auto px-4 py-8 md:py-12 z-10 relative">
         {renderPage()}
       </main>
       <Footer />
@@ -663,6 +678,19 @@ export const App: React.FC = () => {
             client={currentUser}
             professional={users.find(u => u.id === serviceToPay.professionalId)!}
         />
+      )}
+      {activeModal === 'joinInvitation' && (
+          <JoinInvitationModal 
+            onClose={() => setActiveModal(null)}
+            onLogin={() => setActiveModal('login')}
+            onSignup={() => setActiveModal('signup')}
+          />
+      )}
+      {activeModal === 'featureDetails' && selectedFeature && (
+          <FeatureModal 
+            content={selectedFeature}
+            onClose={() => setActiveModal(null)}
+          />
       )}
     </div>
   );

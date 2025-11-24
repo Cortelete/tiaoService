@@ -47,23 +47,23 @@ const RenderChanges: React.FC<{ user: User }> = ({ user }) => {
     );
 };
 
-
-export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus, onDeleteUser, onEditUser, onApproveServiceChange, onApproveProfileChange, onBack }) => {
-  const pendingProfessionals = users.filter(u => u.role === 'professional' && u.status === 'pending');
-  const serviceChangeRequests = users.filter(u => u.role === 'professional' && u.servicesChangeRequest && u.servicesChangeRequest.length > 0);
-  const profileChangeRequests = users.filter(u => u.role === 'professional' && u.profileChangeRequest && Object.keys(u.profileChangeRequest).length > 0);
-  const otherUsers = users.filter(u => u.role !== 'admin');
-
-  const getStatusBadge = (status?: UserStatus) => {
+const getStatusBadge = (status?: UserStatus) => {
     switch (status) {
       case 'approved': return <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">Aprovado</span>;
       case 'pending': return <span className="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-200 rounded-full">Pendente</span>;
       case 'blocked': return <span className="px-2 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">Bloqueado</span>;
       default: return null;
     }
-  };
+};
 
-  const UserRow = ({ user }: { user: User }) => (
+interface UserRowProps {
+    user: User;
+    onUpdateUserStatus: (userId: number, status: UserStatus) => void;
+    onDeleteUser: (userId: number) => void;
+    onEditUser: (user: User) => void;
+}
+
+const UserRow: React.FC<UserRowProps> = ({ user, onUpdateUserStatus, onDeleteUser, onEditUser }) => (
     <div className="p-4 bg-gray-50 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div className="flex-1">
         <div className="flex items-center gap-3">
@@ -83,7 +83,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus,
          <button onClick={() => { if(window.confirm(`Tem certeza que deseja remover ${user.name}?`)) onDeleteUser(user.id)}} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors"><TrashIcon className="w-5 h-5"/></button>
       </div>
     </div>
-  );
+);
+
+export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus, onDeleteUser, onEditUser, onApproveServiceChange, onApproveProfileChange, onBack }) => {
+  const pendingProfessionals = users.filter(u => u.role === 'professional' && u.status === 'pending');
+  const serviceChangeRequests = users.filter(u => u.role === 'professional' && u.servicesChangeRequest && u.servicesChangeRequest.length > 0);
+  const profileChangeRequests = users.filter(u => u.role === 'professional' && u.profileChangeRequest && Object.keys(u.profileChangeRequest).length > 0);
+  const otherUsers = users.filter(u => u.role !== 'admin');
 
   return (
     <div>
@@ -145,7 +151,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ users, onUpdateUserStatus,
       <div className="bg-white p-6 rounded-xl shadow-lg">
         <h2 className="text-2xl font-bold text-gray-700 mb-4">Gerenciar Usuários ({otherUsers.length})</h2>
         <div className="space-y-3">
-          {otherUsers.map(user => <UserRow key={user.id} user={user} />)}
+          {otherUsers.map(user => (
+            <UserRow 
+                key={user.id} 
+                user={user} 
+                onUpdateUserStatus={onUpdateUserStatus}
+                onDeleteUser={onDeleteUser}
+                onEditUser={onEditUser}
+            />
+          ))}
         </div>
       </div>
     </div>

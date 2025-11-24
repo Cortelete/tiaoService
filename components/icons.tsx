@@ -205,7 +205,7 @@ export const StopIcon: React.FC<IconProps> = (props) => (
 );
 export const CpuChipIcon: React.FC<IconProps> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v18h16.5V3H3.75zm13.5 1.5h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zM7.5 21v-1.5H6V21h1.5zm3 0v-1.5h-1.5V21H10.5zm3 0v-1.5h-1.5V21H13.5zm3 0v-1.5h-1.5V21H16.5zm3 0v-1.5h-1.5V21H19.5zM3.75 16.5H6v1.5H3.75v-1.5zm0-3H6v1.5H3.75v-1.5zm0-3H6v1.5H3.75v-1.5zm0-3H6v1.5H3.75V7.5zM20.25 16.5h-1.5v1.5h1.5v-1.5zm0-3h-1.5v1.5h1.5v-1.5zm0-3h-1.5v1.5h1.5v-1.5zm0-3h-1.5v1.5h1.5V7.5zM9 9.75h6V15H9V9.75z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v18h16.5V3H3.75zm13.5 1.5h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zm-3 0h1.5v1.5h-1.5V4.5zM7.5 21v-1.5H6V21h1.5zm3 0v-1.5h-1.5V21H10.5zm3 0v-1.5h-1.5V21H13.5zm3 0v-1.5h-1.5V21H16.5zm3 0v-1.5h-1.5V21H19.5zM3.75 16.5H6v1.5H3.75v-1.5zm0-3H6v1.5H3.75v-1.5zm0-3H6v1.5H3.75v-1.5zm0-3H6v1.5H3.75V7.5zM20.25 16.5h-1.5v1.5h1.5v-1.5zm0-3h-1.5v1.5h1.5v-1.5zm0-3h-1.5v1.5h1.5v-1.5zm0-3h-1.5v1.5h1.5V7.5zM9 9.75h6V15H9V9.75z" />
     </svg>
 );
 export const RectangleGroupIcon: React.FC<IconProps> = (props) => (
@@ -255,5 +255,11 @@ export const ClipboardDocumentListIcon: React.FC<IconProps> = (props) => (
 export const MicrophoneIcon: React.FC<IconProps> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+    </svg>
+);
+
+export const ChevronRightIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
     </svg>
 );

@@ -5,7 +5,7 @@ export type UserRole = 'client' | 'professional' | 'admin';
 export type UserStatus = 'pending' | 'approved' | 'blocked';
 export type ServicePeriod = 'Manhã' | 'Tarde' | 'Noite';
 export type TransactionType = 'deposit' | 'withdrawal' | 'payment_sent' | 'payment_received' | 'bonus';
-export type ActiveModal = 'login' | 'signup' | 'professional' | 'chat' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'serviceRequest' | 'confirmation' | 'cta' | 'addFunds' | 'withdraw' | 'servicePayment' | 'emergencyChat';
+export type ActiveModal = 'login' | 'signup' | 'professional' | 'chat' | 'pendingApproval' | 'completeProfile' | 'editUser' | 'serviceRequest' | 'confirmation' | 'cta' | 'addFunds' | 'withdraw' | 'servicePayment' | 'emergencyChat' | 'joinInvitation' | 'featureDetails';
 
 
 export interface ServiceCategory {
@@ -116,4 +116,10 @@ export interface ServiceRequest extends ServiceRequestFormData {
     status: 'pending' | 'accepted' | 'declined' | 'completed' | 'awaiting_payment' | 'paid';
     createdAt: string;
     price?: number;
+}
+
+export interface FeatureContent {
+    title: string;
+    description: string;
+    icon: React.FC<React.SVGProps<SVGSVGElement>>;
 }
